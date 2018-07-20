@@ -1,8 +1,7 @@
 # CAPtivatorINTEL
 
-!!!Currently in development - older, functional version available here: 
+!!!Currently in development - older, functional version available here: https://github.com/Nikolichnik/CAPtivatorINTEL_alpha
 
-https://github.com/Nikolichnik/CAPtivatorINTEL_alpha
 
 Data acquisition companion software for CAPtivatorGYM supercapacitor testing device.
 
