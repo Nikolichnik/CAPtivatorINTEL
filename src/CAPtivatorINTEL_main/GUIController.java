@@ -55,8 +55,8 @@ public class GUIController implements Initializable {
     @FXML
     private CheckBox writeFileCheck;
 
-    @FXML
     ObservableList<String> dropItems = comms.getPortList();
+    @FXML
     private ComboBox<String> selectPortDrop = new ComboBox();
 
     @FXML
