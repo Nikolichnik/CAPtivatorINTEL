@@ -15,17 +15,21 @@ public class CAPtivatorINTEL extends Application {
     private Stage stage = new Stage();
     private String sceneFile = "/CAPtivatorINTEL_main/FXMLDocument.fxml";
     private URL url = getClass().getResource(sceneFile);
-    private HBox root;
+    private Parent root;
 
     @Override
     public void start(Stage stage) {
         try {
-            root = (HBox) FXMLLoader.load(url);
+            FXMLLoader loader = new FXMLLoader(url);
+            root = (Parent) loader.load(url);
+            GUIController gui = new GUIController();
             System.out.println("  fxmlResource = " + sceneFile);
-            Scene scene = new Scene((Parent) root, 900, 500);
-            stage.setTitle("CAPtivatorINTEL");            
+            Scene scene = new Scene(root, 900, 500);
+            stage.setTitle("CAPtivatorINTEL");
             stage.setScene(scene);
             stage.show();
+            gui.setData();
+//            gui.test();
         } catch (Exception ex) {
             System.out.println("Exception on FXMLLoader.load()");
             System.out.println("  * url: " + url);

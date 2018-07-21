@@ -50,11 +50,17 @@ public class GUIController implements Initializable {
     private CheckBox writeFileCheck;
 
     @FXML
-    private ComboBox<String> selectPortDrop;
+    private ComboBox<String> selectPortDrop = new ComboBox();
     ObservableList<String> dropItems = comms.getPortList();
 
     @FXML
-    private ToggleButton connectButton;   
+    private ToggleButton connectButton;
+
+    public void setData() {
+        selectPortDrop.getItems().clear();
+        selectPortDrop.getItems().addAll("COM1", "COM2", "COM3");
+        System.out.println(dropItems);
+    }
 
     @FXML
     void handleButtonAction(ActionEvent event) {
@@ -62,18 +68,33 @@ public class GUIController implements Initializable {
     }
 
     public void handleConnectClick() {
-
+        if (connectButton.getText().equalsIgnoreCase("Connect")) {
+            connectButton.setText("Connected");
+        } else {
+            connectButton.setText("Connect");
+        }
     }
 
     public void handleFileReadClick() {
+        if (readFileButton.getText().equalsIgnoreCase("Read file")) {
+            readFileButton.setText("Reading file...");
+        } else {
+            readFileButton.setText("Read file");
+        }
+    }
 
+    public void handlePortDropClick() {
+
+    }
+
+    public void test() {
+        readFileButton.setText("mrš");
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println(dropItems);
-        selectPortDrop = new ComboBox(dropItems);
-        connectButton.setText("Ša je???");
+//        assert dropItems != null : "fx:id=\"dropItems\" was not injected: check your FXML file 'FXMLDocument.fxml'.";
+//        System.out.println(dropItems);
     }
 
 }
