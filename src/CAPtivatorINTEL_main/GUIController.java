@@ -9,18 +9,12 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.control.Tooltip;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import javafx.stage.Stage;
 
 public class GUIController implements Initializable {
 
@@ -38,7 +32,7 @@ public class GUIController implements Initializable {
     private ComboBox<String> selectFileDrop;
 
     @FXML
-    private ToggleButton readFileButton;
+    private ToggleButton readFileButton = new ToggleButton();
 
     @FXML
     private Region bottomPanel;
@@ -50,17 +44,11 @@ public class GUIController implements Initializable {
     private CheckBox writeFileCheck;
 
     @FXML
-    private ComboBox<String> selectPortDrop = new ComboBox();
+    private ComboBox<String> selectPortDrop;
     ObservableList<String> dropItems = comms.getPortList();
 
     @FXML
-    private ToggleButton connectButton;
-
-    public void setData() {
-        selectPortDrop.getItems().clear();
-        selectPortDrop.getItems().addAll("COM1", "COM2", "COM3");
-        System.out.println(dropItems);
-    }
+    private ToggleButton connectButton = new ToggleButton();    
 
     @FXML
     void handleButtonAction(ActionEvent event) {
@@ -87,14 +75,10 @@ public class GUIController implements Initializable {
 
     }
 
-    public void test() {
-        readFileButton.setText("mrš");
-    }
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-//        assert dropItems != null : "fx:id=\"dropItems\" was not injected: check your FXML file 'FXMLDocument.fxml'.";
-//        System.out.println(dropItems);
+        this.selectPortDrop.getItems().clear();
+        this.selectPortDrop.getItems().addAll(dropItems);
     }
 
 }

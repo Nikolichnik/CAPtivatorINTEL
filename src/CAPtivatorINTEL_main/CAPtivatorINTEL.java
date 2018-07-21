@@ -28,8 +28,6 @@ public class CAPtivatorINTEL extends Application {
             stage.setTitle("CAPtivatorINTEL");
             stage.setScene(scene);
             stage.show();
-            gui.setData();
-//            gui.test();
         } catch (Exception ex) {
             System.out.println("Exception on FXMLLoader.load()");
             System.out.println("  * url: " + url);
