@@ -78,19 +78,21 @@ public class GUIController implements Initializable {
                 selectPortDrop.setDisable(true);
             }
 
+            graph.setCreateSymbols(false);
+
+            XYChart.Series voltageData = new XYChart.Series();
+            voltageData.setName("Voltage");
+
+            XYChart.Series currentData = new XYChart.Series();
+            currentData.setName("Current");
+
+            graph.getData().addAll(voltageData, currentData);
+
             Thread thread = new Thread() {
                 @Override
                 public void run() {
 
-                    graph.setCreateSymbols(false);
-
-                    XYChart.Series voltageData = new XYChart.Series();
-                    voltageData.setName("Voltage");
-
-                    XYChart.Series currentData = new XYChart.Series();
-                    currentData.setName("Current");
-
-                    graph.getData().addAll(voltageData, currentData);
+                    System.out.println("Ušao u run");
 
                     Scanner scanner = new Scanner(chosenPort.getInputStream());
 
@@ -119,7 +121,7 @@ public class GUIController implements Initializable {
                     scanner.close();
                 }
             };
-
+            thread.start();
         } else {
             graph.getData().clear();
             chosenPort.closePort();
