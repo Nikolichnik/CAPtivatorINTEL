@@ -2,6 +2,7 @@ package CAPtivatorINTEL_main;
 
 import FileHandling.FileReader;
 import FileHandling.FileWriter;
+import com.fazecast.jSerialComm.SerialPort;
 import comms.CommHandler;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -18,9 +19,10 @@ import javafx.scene.layout.Region;
 
 public class GUIController implements Initializable {
 
-    private CommHandler comms = new CommHandler();
     private FileReader fileReader = new FileReader();
     private FileWriter fileWriter = new FileWriter();
+    private CommHandler comms = new CommHandler();
+    private SerialPort chosenPort;
 
     @FXML
     private Region leftPanel;
@@ -48,7 +50,7 @@ public class GUIController implements Initializable {
     ObservableList<String> dropItems = comms.getPortList();
 
     @FXML
-    private ToggleButton connectButton = new ToggleButton();    
+    private ToggleButton connectButton = new ToggleButton();
 
     @FXML
     void handleButtonAction(ActionEvent event) {
@@ -57,7 +59,12 @@ public class GUIController implements Initializable {
 
     public void handleConnectClick() {
         if (connectButton.getText().equalsIgnoreCase("Connect")) {
-            connectButton.setText("Connected");
+            comms.setChosenPort(SerialPort.getCommPort(selectPortDrop.getValue()));
+            chosenPort = comms.getChosenPort();
+            if (chosenPort.openPort()) {
+                connectButton.setText("Connected");
+                selectPortDrop.setDisable(true);
+            }
         } else {
             connectButton.setText("Connect");
         }
@@ -77,8 +84,8 @@ public class GUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        this.selectPortDrop.getItems().clear();
-        this.selectPortDrop.getItems().addAll(dropItems);
+        selectPortDrop.getItems().clear();
+        selectPortDrop.getItems().addAll(dropItems);
     }
 
 }

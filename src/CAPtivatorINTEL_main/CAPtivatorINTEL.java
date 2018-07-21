@@ -22,7 +22,6 @@ public class CAPtivatorINTEL extends Application {
         try {
             FXMLLoader loader = new FXMLLoader(url);
             root = (Parent) loader.load(url);
-            GUIController gui = new GUIController();
             System.out.println("  fxmlResource = " + sceneFile);
             Scene scene = new Scene(root, 900, 500);
             stage.setTitle("CAPtivatorINTEL");
