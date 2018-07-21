@@ -28,12 +28,6 @@ public class GUIController implements Initializable {
     private FileReader fileReader = new FileReader();
     private FileWriter fileWriter = new FileWriter();
 
-    private Stage stage = new Stage();
-
-    private String sceneFile = "/CAPtivatorINTEL_main/FXMLDocument.fxml";
-    private URL url = getClass().getResource(sceneFile);
-    private HBox root;
-
     @FXML
     private Region leftPanel;
 
@@ -55,41 +49,18 @@ public class GUIController implements Initializable {
     @FXML
     private CheckBox writeFileCheck;
 
+    @FXML
+    private ComboBox<String> selectPortDrop;
     ObservableList<String> dropItems = comms.getPortList();
-    @FXML
-    private ComboBox<String> selectPortDrop = new ComboBox();
 
     @FXML
-    private ToggleButton connectButton;    
+    private ToggleButton connectButton;   
 
-    public void loadGUI() {
-        try {
-            root = (HBox) FXMLLoader.load(url);
-            System.out.println("  fxmlResource = " + sceneFile);
-            Scene scene = new Scene((Parent) root, 900, 500);
-            stage.setTitle("CAPtivatorINTEL");
-            selectPortDrop.setTooltip(new Tooltip());
-            selectPortDrop.getItems().addAll(dropItems);           
-            stage.setScene(scene);
-            stage.show();
-        } catch (Exception ex) {
-            System.out.println("Exception on FXMLLoader.load()");
-            System.out.println("  * url: " + url);
-            System.out.print("  * ");
-            ex.printStackTrace();
-            System.out.println("    ----------------------------------------\n");
-        }
-        
-        System.out.println(dropItems);
-        
-        
-    }
-    
     @FXML
     void handleButtonAction(ActionEvent event) {
 
     }
-    
+
     public void handleConnectClick() {
 
     }
@@ -100,7 +71,9 @@ public class GUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-//        selectPortDrop
+        System.out.println(dropItems);
+        selectPortDrop = new ComboBox(dropItems);
+        connectButton.setText("Ša je???");
     }
 
 }
