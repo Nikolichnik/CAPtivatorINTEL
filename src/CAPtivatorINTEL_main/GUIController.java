@@ -31,9 +31,9 @@ public class GUIController implements Initializable {
     private CommHandler comms = new CommHandler();
     private SerialPort chosenPort;
 
-    double voltage = 0;
-    double current = 0;
-    double seconds = 0;
+    private double voltage = 0;
+    private double current = 0;
+    private double seconds = 0;
 
     @FXML
     private Region leftPanel;
@@ -78,40 +78,47 @@ public class GUIController implements Initializable {
                 selectPortDrop.setDisable(true);
             }
 
-            graph.setCreateSymbols(false);
+            Thread thread = new Thread() {
+                @Override
+                public void run() {
 
-            XYChart.Series voltageData = new XYChart.Series();
-            voltageData.setName("Voltage");
+                    graph.setCreateSymbols(false);
 
-            XYChart.Series currentData = new XYChart.Series();
-            currentData.setName("Current");
+                    XYChart.Series voltageData = new XYChart.Series();
+                    voltageData.setName("Voltage");
 
-            graph.getData().addAll(voltageData, currentData);
+                    XYChart.Series currentData = new XYChart.Series();
+                    currentData.setName("Current");
 
-            Scanner scanner = new Scanner(chosenPort.getInputStream());
+                    graph.getData().addAll(voltageData, currentData);
 
-            while (scanner.hasNextLine()) {
+                    Scanner scanner = new Scanner(chosenPort.getInputStream());
 
-                try {
-                    String line = scanner.nextLine();
-                    System.out.println(line);
-                    List<Double> linijaPodataka = new ArrayList();
-                    if (line.matches("\\d+,.*")) {
-                        linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Double.parseDouble((String) token)).collect(Collectors.toList());
-                        voltage = linijaPodataka.get(0);
-                        current = linijaPodataka.get(1);
-                        seconds = linijaPodataka.get(2);
+                    while (scanner.hasNextLine()) {
 
-                        voltageData.getData().add(new XYChart.Data(voltage, seconds));
-                        currentData.getData().add(new XYChart.Data(current, seconds));
+                        try {
+                            String line = scanner.nextLine();
+                            System.out.println(line);
+                            List<Double> linijaPodataka = new ArrayList();
+                            if (line.matches("\\d+,.*")) {
+                                linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Double.parseDouble((String) token)).collect(Collectors.toList());
+                                voltage = linijaPodataka.get(0);
+                                current = linijaPodataka.get(1);
+                                seconds = linijaPodataka.get(2);
 
+                                voltageData.getData().add(new XYChart.Data(voltage, seconds));
+                                currentData.getData().add(new XYChart.Data(current, seconds));
+
+//                                System.out.println("" + voltage + ", " + current + ", " + seconds);
+                            }
+                            linijaPodataka.clear();
+                        } catch (Exception ex) {
+                            System.out.println("Something is wrong with parsing!");
+                        }
                     }
-                    linijaPodataka.clear();
-                } catch (Exception ex) {
-                    System.out.println("Something is wrong with parsing!");
+                    scanner.close();
                 }
-            }
-            scanner.close();
+            };
 
         } else {
             graph.getData().clear();
