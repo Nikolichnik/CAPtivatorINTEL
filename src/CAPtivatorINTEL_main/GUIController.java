@@ -17,6 +17,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
@@ -29,6 +30,10 @@ public class GUIController implements Initializable {
     private FileWriter fileWriter = new FileWriter();
     private CommHandler comms = new CommHandler();
     private SerialPort chosenPort;
+
+    double voltage = 0;
+    double current = 0;
+    double seconds = 0;
 
     @FXML
     private Region leftPanel;
@@ -67,14 +72,21 @@ public class GUIController implements Initializable {
         if (connectButton.getText().equalsIgnoreCase("Connect")) {
             comms.setChosenPort(SerialPort.getCommPort(selectPortDrop.getValue()));
             chosenPort = comms.getChosenPort();
+            chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
             if (chosenPort.openPort()) {
                 connectButton.setText("Connected");
                 selectPortDrop.setDisable(true);
             }
 
-            double voltage = 0;
-            double current = 0;
-            double seconds = 0;
+            graph.setCreateSymbols(false);
+
+            XYChart.Series voltageData = new XYChart.Series();
+            voltageData.setName("Voltage");
+
+            XYChart.Series currentData = new XYChart.Series();
+            currentData.setName("Current");
+
+            graph.getData().addAll(voltageData, currentData);
 
             Scanner scanner = new Scanner(chosenPort.getInputStream());
 
@@ -89,7 +101,10 @@ public class GUIController implements Initializable {
                         voltage = linijaPodataka.get(0);
                         current = linijaPodataka.get(1);
                         seconds = linijaPodataka.get(2);
-                        System.out.println("" + voltage + current + seconds);
+
+                        voltageData.getData().add(new XYChart.Data(voltage, seconds));
+                        currentData.getData().add(new XYChart.Data(current, seconds));
+
                     }
                     linijaPodataka.clear();
                 } catch (Exception ex) {
@@ -99,6 +114,7 @@ public class GUIController implements Initializable {
             scanner.close();
 
         } else {
+            graph.getData().clear();
             chosenPort.closePort();
             selectPortDrop.setDisable(false);
             connectButton.setText("Connect");
@@ -111,10 +127,6 @@ public class GUIController implements Initializable {
         } else {
             readFileButton.setText("Read file");
         }
-    }
-
-    public void handlePortDropClick() {
-
     }
 
     @Override

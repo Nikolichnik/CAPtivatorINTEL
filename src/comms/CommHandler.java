@@ -1,10 +1,7 @@
 package comms;
 
-import CAPtivatorINTEL_main.GUIController;
 import com.fazecast.jSerialComm.SerialPort;
 import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,7 +22,7 @@ public class CommHandler implements Initializable {
         this.chosenPort = chosenPort;
     }
 
-    public String getInput() {
+    public String getInput() {        
         return input;
     }
 

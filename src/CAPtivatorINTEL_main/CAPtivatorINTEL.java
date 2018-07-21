@@ -5,8 +5,6 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Tooltip;
-import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 public class CAPtivatorINTEL extends Application {
@@ -22,7 +20,7 @@ public class CAPtivatorINTEL extends Application {
         try {
             FXMLLoader loader = new FXMLLoader(url);
             root = (Parent) loader.load(url);
-            System.out.println("  fxmlResource = " + sceneFile);
+//            System.out.println("  fxmlResource = " + sceneFile);
             Scene scene = new Scene(root, 900, 500);
             stage.setTitle("CAPtivatorINTEL");
             stage.setScene(scene);

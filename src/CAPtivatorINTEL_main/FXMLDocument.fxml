@@ -72,7 +72,7 @@
                         <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
                      </HBox.margin>
                   </CheckBox>
-                  <ComboBox fx:id="selectPortDrop" prefHeight="25.0" prefWidth="113.0" promptText="Select COM..." onAction="#handlePortDropClick" >
+                  <ComboBox fx:id="selectPortDrop" prefHeight="25.0" prefWidth="113.0" promptText="Select COM..." >
                         <items>
                         <FXCollections fx:factory="observableArrayList" >
                             
