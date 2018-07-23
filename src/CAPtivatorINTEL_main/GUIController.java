@@ -98,9 +98,6 @@ public class GUIController extends Application implements Initializable {
             stage.setTitle("CAPtivatorINTEL");
             stage.setScene(scene);
             stage.show();
-
-//            System.out.println(task.getMessage());
-//        connectButton.addEventHandler(onClick, eventHandler);
         } catch (Exception ex) {
             System.out.println("Exception on FXMLLoader.load()");
             System.out.println("  * url: " + url);
