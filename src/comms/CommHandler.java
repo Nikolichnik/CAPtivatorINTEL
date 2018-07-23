@@ -3,9 +3,11 @@ package comms;
 import com.fazecast.jSerialComm.SerialPort;
 import java.net.URL;
 import java.util.ResourceBundle;
+import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.Initializable;
+import javafx.stage.Stage;
 
 public class CommHandler implements Initializable {
 
@@ -49,5 +51,6 @@ public class CommHandler implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
     }
+
 
 }

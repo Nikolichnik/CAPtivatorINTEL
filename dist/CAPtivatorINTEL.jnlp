@@ -8,12 +8,12 @@
   </information>
   <resources>
     <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="CAPtivatorINTEL.jar" size="738560" download="eager" />
+    <jar href="CAPtivatorINTEL.jar" size="740520" download="eager" />
     <jar href="lib\jSerialComm-2.0.2.jar" size="616949" download="eager" />
   </resources>
   <applet-desc  width="800" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="CAPtivatorINTEL" >
     <param name="requiredFXVersion" value="8.0+"/>
   </applet-desc>
-  <jfx:javafx-desc  width="800" height="600" main-class="CAPtivatorINTEL_main.CAPtivatorINTEL"  name="CAPtivatorINTEL" />
+  <jfx:javafx-desc  width="800" height="600" main-class="CAPtivatorINTEL_main.GUIController"  name="CAPtivatorINTEL" />
   <update check="always"/>
 </jnlp>

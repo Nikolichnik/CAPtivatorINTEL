@@ -43,7 +43,7 @@
          <children>
             <LineChart fx:id="graph" prefHeight="369.0" prefWidth="543.0" VBox.vgrow="ALWAYS">
               <xAxis>
-                <CategoryAxis side="BOTTOM" />
+                <NumberAxis side="BOTTOM" />
               </xAxis>
               <yAxis>
                 <NumberAxis side="LEFT" />
@@ -74,8 +74,7 @@
                   </CheckBox>
                   <ComboBox fx:id="selectPortDrop" prefHeight="25.0" prefWidth="113.0" promptText="Select COM..." >
                         <items>
-                        <FXCollections fx:factory="observableArrayList" >
-                            
+                        <FXCollections fx:factory="observableArrayList" >                            
                         </FXCollections>
                         </items>
                   </ComboBox>
