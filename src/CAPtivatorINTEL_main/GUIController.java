@@ -142,13 +142,11 @@ public class GUIController extends Application implements Initializable {
                                     public void run() {
                                         voltageData.getData().add(new XYChart.Data(seconds, voltage));
                                         currentData.getData().add(new XYChart.Data(seconds, current));
-                                        updateMessage("" + voltage + current + seconds);
+                                        updateMessage("" + voltage + ", " + current + ", " + seconds);
                                         System.out.println(getMessage());
                                         fileNameTextBox.setText(getMessage());
                                     }
                                 });
-
-//                                System.out.println("" + voltage + current + seconds);
                             }
                         } catch (Exception ex) {
                             System.out.println("Something is wrong with parsing!");
