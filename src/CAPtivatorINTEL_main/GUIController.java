@@ -3,7 +3,10 @@ package CAPtivatorINTEL_main;
 import FileHandling.FileReader;
 import com.fazecast.jSerialComm.SerialPort;
 import comms.CommHandler;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +34,7 @@ public class GUIController implements Initializable {
     private final FileReader fileReader = new FileReader();
 //    private FileCreator fileCreator;
     private FileWriter fileWriter;
+    private FileWriter fileWriterAll;
     private final CommHandler comms = new CommHandler();
     private SerialPort chosenPort;
 
@@ -44,7 +48,8 @@ public class GUIController implements Initializable {
     private Task task;
 
     private int cycle = 0;
-    private int measuredCapacity = 0;
+    private int cycleAll = 0;
+    private Double measuredCapacity = -1.0;
 
     @FXML
     private Region leftPanel;
@@ -102,8 +107,8 @@ public class GUIController implements Initializable {
                                     if (line.contains("Discharging...")) {
                                         LocalDateTime timestamp = LocalDateTime.now();
                                         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-                                        System.out.println(dtf.format(timestamp));
-                                        String fileName = "data/" + capacitorIDTextBox.getText() + "_" + ++cycle + "_" + dtf.format(timestamp) + ".txt";
+//                                        System.out.println(dtf.format(timestamp));
+                                        String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + ++cycle + "_" + dtf.format(timestamp) + ".txt";
                                         System.out.println(fileName);
                                         try {
                                             fileWriter = new FileWriter(fileName, false);
@@ -111,8 +116,47 @@ public class GUIController implements Initializable {
                                             System.out.println("Unable to create file!");
                                         }
                                     }
-                                    if (line.contains("Discharge cycle")) {
+                                    if (line.contains("Discharge cycle") || line.contains("Charge cycle")) {
+                                        LocalDateTime timestamp = LocalDateTime.now();
+                                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+                                        String fileName = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
+                                        try {
+                                            fileWriterAll = new FileWriter(fileName, true);
+                                        } catch (Exception ex) {
+                                            System.out.println("Unable to create file!");
+                                        }
+                                        FileInputStream in = new FileInputStream(fileName);
+                                        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                                        String strLine = null, tmp;
+                                        while ((tmp = br.readLine()) != null) {
+                                            strLine = tmp;
+                                        }
+                                        String lastLine = null;
 
+                                        if (strLine != null) {
+                                            lastLine = strLine.substring(strLine.indexOf(",") + 1, strLine.indexOf(",", strLine.indexOf(",") + 1));
+                                        } else {
+                                            lastLine = "0";
+                                        }
+                                        System.out.println(lastLine);
+                                        in.close();
+
+                                        cycleAll = Integer.parseInt(lastLine);
+
+                                        measuredCapacity = Double.parseDouble(line.substring(line.indexOf("=") + 2));
+
+                                        if (line.contains("Discharge cycle")) {
+                                            cycleAll++;
+                                        }
+
+                                        String data = capacitorIDTextBox.getText() + "," + cycleAll + "," + dtf.format(timestamp) + "," + measuredCapacity;
+
+                                        fileWriterAll.append(data + "\r\n");
+                                        fileWriterAll.flush();
+                                    }
+                                    if (line.contains("Measurement complete!")) {
+                                        fileWriter = null;
+                                        fileWriterAll = null;
                                     }
                                 }
                                 if (line.matches("\\d+,.*")) {
@@ -141,6 +185,7 @@ public class GUIController implements Initializable {
                             }
                         }
                     }
+
                     return null;
                 }
             };
