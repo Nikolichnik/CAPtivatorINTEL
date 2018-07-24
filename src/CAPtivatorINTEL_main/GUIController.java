@@ -4,6 +4,7 @@ import FileHandling.FileReader;
 import com.fazecast.jSerialComm.SerialPort;
 import comms.CommHandler;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
@@ -31,12 +32,14 @@ import javafx.scene.layout.Region;
 
 public class GUIController implements Initializable {
 
-    private final FileReader fileReader = new FileReader();
-//    private FileCreator fileCreator;
+    private FileReader fileReader = new FileReader();
     private FileWriter fileWriter;
     private FileWriter fileWriterAll;
     private final CommHandler comms = new CommHandler();
     private SerialPort chosenPort;
+    
+    private File folderRaw = new File("data/raw/");
+    private File folderData = new File("data/");
 
     private final XYChart.Series voltageData = new XYChart.Series();
     private final XYChart.Series currentData = new XYChart.Series();
@@ -58,7 +61,8 @@ public class GUIController implements Initializable {
     private LineChart<?, ?> graph;
 
     @FXML
-    private ComboBox<String> selectFileDrop;
+    private ComboBox<String> selectFileDrop;    
+    ObservableList<String> selectFileDropItems;
 
     @FXML
     private ToggleButton readFileButton;
@@ -74,7 +78,7 @@ public class GUIController implements Initializable {
 
     @FXML
     private ComboBox<String> selectPortDrop;
-    ObservableList<String> dropItems = comms.getPortList();
+    ObservableList<String> selectPortDropItems = comms.getPortList();
 
     @FXML
     private ToggleButton connectButton;
@@ -202,15 +206,27 @@ public class GUIController implements Initializable {
     }
 
     public void handleFileReadClick() {
-        if (readFileButton.getText().equalsIgnoreCase("Read file")) {
-            readFileButton.setText("Reading file...");
-        } else {
-            readFileButton.setText("Read file");
-        }
+//        File file = null;
+//        Scanner sc = null;
+//        try {
+//            file = new File("data/raw/" + selectFileDrop.getValue());
+//            sc = new Scanner(file);
+//        } catch (Exception ex) {
+//            System.out.println("Waaa!");
+//        }
+//        if (readFileButton.getText().equalsIgnoreCase("Read file")) {
+//            readFileButton.setText("Reading file...");
+//            readFileButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+//
+//        } else {
+//            readFileButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+//            readFileButton.setText("Read file");
+//        }
     }
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(URL location, ResourceBundle resources
+    ) {
 
         final String IDLE_BUTTON_STYLE = "-fx-background-color: transparent;";
         final String HOVERED_BUTTON_STYLE = "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, -fx-body-color;";
@@ -224,7 +240,13 @@ public class GUIController implements Initializable {
 //        readFileButton.setOnMouseExited(e -> readFileButton.setStyle(IDLE_BUTTON_STYLE));
 
         selectPortDrop.getItems().clear();
-        selectPortDrop.getItems().addAll(dropItems);
+        selectPortDrop.getItems().addAll(selectPortDropItems);
+
+        selectFileDropItems = fileReader.getFileRawList(folderRaw);
+        
+        selectFileDrop.getItems().clear();
+        selectFileDrop.getItems().addAll(selectFileDropItems);
+
         graph.setCreateSymbols(false);
         graph.setAnimated(false);
 
