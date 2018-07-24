@@ -33,14 +33,14 @@ import javafx.scene.layout.Region;
 
 public class GUIController implements Initializable {
 
-    private FileReader fileReader = new FileReader();
+    private final FileReader fileReader = new FileReader();
     private FileWriter fileWriter;
     private FileWriter fileWriterAll;
     private final CommHandler comms = new CommHandler();
     private SerialPort chosenPort;
 
-    private File folderRaw = new File("data/raw/");
-    private File folderData = new File("data/");
+    private final File folderRaw = new File("data/raw/");
+    private final File folderData = new File("data/");
 
     private final XYChart.Series voltageData = new XYChart.Series();
     private final XYChart.Series currentData = new XYChart.Series();
@@ -136,6 +136,7 @@ public class GUIController implements Initializable {
                                         while ((tmp = br.readLine()) != null) {
                                             strLine = tmp;
                                         }
+                                        
                                         String lastLine = null;
 
                                         if (strLine != null) {
