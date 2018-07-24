@@ -1,10 +1,12 @@
 package CAPtivatorINTEL_main;
 
 import FileHandling.FileReader;
-import FileHandling.FileWriter;
 import com.fazecast.jSerialComm.SerialPort;
 import comms.CommHandler;
+import java.io.FileWriter;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -27,7 +29,8 @@ import javafx.scene.layout.Region;
 public class GUIController implements Initializable {
 
     private final FileReader fileReader = new FileReader();
-    private final FileWriter fileWriter = new FileWriter();
+//    private FileCreator fileCreator;
+    private FileWriter fileWriter;
     private final CommHandler comms = new CommHandler();
     private SerialPort chosenPort;
 
@@ -39,6 +42,9 @@ public class GUIController implements Initializable {
     private int seconds = 0;
 
     private Task task;
+
+    private int cycle = 0;
+    private int measuredCapacity = 0;
 
     @FXML
     private Region leftPanel;
@@ -56,7 +62,7 @@ public class GUIController implements Initializable {
     private Region bottomPanel;
 
     @FXML
-    private TextField fileNameTextBox;
+    private TextField capacitorIDTextBox;
 
     @FXML
     private CheckBox writeFileCheck;
@@ -76,6 +82,7 @@ public class GUIController implements Initializable {
             chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
             if (chosenPort.openPort()) {
                 connectButton.setText("Connected");
+                connectButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
                 selectPortDrop.setDisable(true);
             }
 
@@ -91,6 +98,23 @@ public class GUIController implements Initializable {
                             try {
                                 String line = scanner.nextLine();
 //                            System.out.println(line);
+                                if (writeFileCheck.isSelected() && capacitorIDTextBox.getText() != null) {
+                                    if (line.contains("Discharging...")) {
+                                        LocalDateTime timestamp = LocalDateTime.now();
+                                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+                                        System.out.println(dtf.format(timestamp));
+                                        String fileName = "data/" + capacitorIDTextBox.getText() + "_" + ++cycle + "_" + dtf.format(timestamp) + ".txt";
+                                        System.out.println(fileName);
+                                        try {
+                                            fileWriter = new FileWriter(fileName, false);
+                                        } catch (Exception ex) {
+                                            System.out.println("Unable to create file!");
+                                        }
+                                    }
+                                    if (line.contains("Discharge cycle")) {
+
+                                    }
+                                }
                                 if (line.matches("\\d+,.*")) {
                                     linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
                                     voltage = linijaPodataka.get(0);
@@ -104,9 +128,13 @@ public class GUIController implements Initializable {
                                             currentData.getData().add(new XYChart.Data(seconds, current));
                                             updateMessage("" + voltage + ", " + current + ", " + seconds);
                                             System.out.println(getMessage());
-                                            fileNameTextBox.setText(getMessage());
+//                                            capacitorIDTextBox.setText(getMessage());
                                         }
                                     });
+                                }
+                                if (fileWriter != null) {
+                                    fileWriter.append(voltage + "," + current + "," + seconds + "\r\n");
+                                    fileWriter.flush();
                                 }
                             } catch (Exception ex) {
                                 System.out.println("Something is wrong with parsing!");
@@ -123,6 +151,7 @@ public class GUIController implements Initializable {
 //            graph.getData().clear();
             chosenPort.closePort();
             selectPortDrop.setDisable(false);
+            connectButton.setStyle("-fx-background-color: transparent;");
             connectButton.setText("Connect");
         }
     }
@@ -139,15 +168,15 @@ public class GUIController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
 
         final String IDLE_BUTTON_STYLE = "-fx-background-color: transparent;";
-        final String HOVERED_BUTTON_STYLE = "-fx-background-color: -fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, -fx-body-color;";
+        final String HOVERED_BUTTON_STYLE = "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, -fx-body-color;";
 
         connectButton.setStyle(IDLE_BUTTON_STYLE);
-        connectButton.setOnMouseEntered(e -> connectButton.setStyle(HOVERED_BUTTON_STYLE));
-        connectButton.setOnMouseExited(e -> connectButton.setStyle(IDLE_BUTTON_STYLE));
+//        connectButton.setOnMouseEntered(e -> connectButton.setStyle(HOVERED_BUTTON_STYLE));
+//        connectButton.setOnMouseExited(e -> connectButton.setStyle(IDLE_BUTTON_STYLE));
 
         readFileButton.setStyle(IDLE_BUTTON_STYLE);
-        readFileButton.setOnMouseEntered(e -> readFileButton.setStyle(HOVERED_BUTTON_STYLE));
-        readFileButton.setOnMouseExited(e -> readFileButton.setStyle(IDLE_BUTTON_STYLE));
+//        readFileButton.setOnMouseEntered(e -> readFileButton.setStyle(HOVERED_BUTTON_STYLE));
+//        readFileButton.setOnMouseExited(e -> readFileButton.setStyle(IDLE_BUTTON_STYLE));
 
         selectPortDrop.getItems().clear();
         selectPortDrop.getItems().addAll(dropItems);
