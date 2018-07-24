@@ -6,6 +6,7 @@ import comms.CommHandler;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -37,7 +38,7 @@ public class GUIController implements Initializable {
     private FileWriter fileWriterAll;
     private final CommHandler comms = new CommHandler();
     private SerialPort chosenPort;
-    
+
     private File folderRaw = new File("data/raw/");
     private File folderData = new File("data/");
 
@@ -61,7 +62,7 @@ public class GUIController implements Initializable {
     private LineChart<?, ?> graph;
 
     @FXML
-    private ComboBox<String> selectFileDrop;    
+    private ComboBox<String> selectFileDrop;
     ObservableList<String> selectFileDropItems;
 
     @FXML
@@ -206,22 +207,59 @@ public class GUIController implements Initializable {
     }
 
     public void handleFileReadClick() {
-//        File file = null;
-//        Scanner sc = null;
-//        try {
-//            file = new File("data/raw/" + selectFileDrop.getValue());
-//            sc = new Scanner(file);
-//        } catch (Exception ex) {
-//            System.out.println("Waaa!");
-//        }
-//        if (readFileButton.getText().equalsIgnoreCase("Read file")) {
-//            readFileButton.setText("Reading file...");
-//            readFileButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
-//
-//        } else {
-//            readFileButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
-//            readFileButton.setText("Read file");
-//        }
+        if (readFileButton.getText().equalsIgnoreCase("Read file") && selectFileDrop.getValue() != null) {
+            readFileButton.setText("Reading file...");
+            readFileButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    try (Scanner scanner = new Scanner(new File("data/raw/" + selectFileDrop.getValue()));) {
+                        List<Integer> linijaPodataka;
+                        while (scanner.hasNextLine()) {
+                            if (isCancelled()) {
+                                break;
+                            }
+                            try {
+                                String line = scanner.nextLine();
+//                            System.out.println(line);
+                                linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
+                                voltage = linijaPodataka.get(0);
+                                current = linijaPodataka.get(1);
+                                seconds = linijaPodataka.get(2);
+                                linijaPodataka.clear();
+                                Platform.runLater(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        voltageData.getData().add(new XYChart.Data(seconds, voltage));
+                                        currentData.getData().add(new XYChart.Data(seconds, current));                                        
+                                    }
+                                });
+                            } catch (Exception ex) {
+                                System.out.println("Something is wrong with parsing!");
+                            }
+                        }
+//                        readFileButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+//                        readFileButton.setText("Read file");
+                    } catch (Exception ex) {
+                        System.out.println("File not found!");
+                    }
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        } else {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    voltageData.getData().clear();
+                    currentData.getData().clear();
+                }
+            });
+            readFileButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+            readFileButton.setText("Read file");
+        }
     }
 
     @Override
@@ -243,7 +281,7 @@ public class GUIController implements Initializable {
         selectPortDrop.getItems().addAll(selectPortDropItems);
 
         selectFileDropItems = fileReader.getFileRawList(folderRaw);
-        
+
         selectFileDrop.getItems().clear();
         selectFileDrop.getItems().addAll(selectFileDropItems);
 
