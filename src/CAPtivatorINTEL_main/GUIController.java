@@ -151,7 +151,7 @@ public class GUIController implements Initializable {
 //            graph.getData().clear();
             chosenPort.closePort();
             selectPortDrop.setDisable(false);
-            connectButton.setStyle("-fx-background-color: transparent;");
+            connectButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
             connectButton.setText("Connect");
         }
     }
