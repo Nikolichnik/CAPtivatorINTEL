@@ -38,7 +38,7 @@ public class GUIController implements Initializable {
     private int current = 0;
     private int seconds = 0;
 
-    Task task;
+    private Task task;
 
     @FXML
     private Region leftPanel;
