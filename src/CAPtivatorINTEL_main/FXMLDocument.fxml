@@ -3,6 +3,7 @@
 <?import com.jfoenix.controls.JFXButton?>
 <?import javafx.collections.FXCollections?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Cursor?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.CheckBox?>
@@ -83,7 +84,10 @@
                                               </ToggleButton>
                                           </children>
                                       </HBox>
-                              <Pane fx:id="dragPaneStats" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#move" onMousePressed="#movePressed" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT" />
+                              <Pane fx:id="dragPaneStats" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#move" onMousePressed="#movePressed" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
+                                 <cursor>
+                                    <Cursor fx:constant="NW_RESIZE" />
+                                 </cursor></Pane>
                            </children>
                         </StackPane>
                             </children>
@@ -115,7 +119,10 @@
                                               </ToggleButton>
                                           </children>
                                       </HBox>
-                              <Pane fx:id="dragPaneFile" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT" />
+                              <Pane fx:id="dragPaneFile" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
+                                 <cursor>
+                                    <Cursor fx:constant="NW_RESIZE" />
+                                 </cursor></Pane>
                            </children>
                         </StackPane>
                             </children>
@@ -168,7 +175,10 @@
                                               </ToggleButton>
                                           </children>
                                       </HBox>
-                              <Pane fx:id="dragPaneSerial" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT" />
+                              <Pane fx:id="dragPaneSerial" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
+                                 <cursor>
+                                    <Cursor fx:constant="NW_RESIZE" />
+                                 </cursor></Pane>
                            </children>
                         </StackPane>
                             </children>
