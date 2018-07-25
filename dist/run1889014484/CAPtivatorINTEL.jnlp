@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<jnlp spec="1.0" xmlns:jfx="http://javafx.com" href="CAPtivatorINTEL.jnlp">
+  <information>
+    <title>CAPtivatorINTEL</title>
+    <vendor>Nikolichnik</vendor>
+    <description>null</description>
+    <offline-allowed/>
+  </information>
+  <resources>
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="CAPtivatorINTEL.jar" size="5615674" download="eager" />
+    <jar href="lib\jSerialComm-2.0.2.jar" size="616949" download="eager" />
+    <jar href="lib\jfoenix-8.0.5.jar" size="2657082" download="eager" />
+  </resources>
+  <applet-desc  width="800" height="600" main-class="com.javafx.main.NoJavaFXFallback"  name="CAPtivatorINTEL" >
+    <param name="requiredFXVersion" value="8.0+"/>
+  </applet-desc>
+  <jfx:javafx-desc  width="800" height="600" main-class="CAPtivatorINTEL_main.CAPtivatorINTEL"  name="CAPtivatorINTEL" />
+  <update check="always"/>
+</jnlp>
