@@ -68,14 +68,17 @@ public class GUIController implements Initializable {
     double yOffset;
 
     @FXML
-    private LineChart<?, ?> graph;
+    private LineChart<?, ?> graphSerial, graphFile, graphStats;
 
     @FXML
-    private ComboBox<String> selectFileDrop;
+    private ComboBox<String> selectFileDropSerial, selectPortDrop;
     ObservableList<String> selectFileDropItems;
+    
+    @FXML
+    ObservableList<String> selectPortDropItems = comms.getPortList();
 
     @FXML
-    private ToggleButton readFileButton;
+    private ToggleButton readFileButtonSerial;
 
     @FXML
     private JFXButton minimiseButton, maximiseButton, closeButton, serialReadButton, fileReadButton, statsReadButton;
@@ -86,9 +89,6 @@ public class GUIController implements Initializable {
     @FXML
     private CheckBox writeFileCheck;
 
-    @FXML
-    private ComboBox<String> selectPortDrop;
-    ObservableList<String> selectPortDropItems = comms.getPortList();
 
     @FXML
     private ToggleButton connectButton;
@@ -283,13 +283,13 @@ public class GUIController implements Initializable {
     }
 
     public void handleFileReadClick() {
-        if (readFileButton.getText().equalsIgnoreCase("Read file") && selectFileDrop.getValue() != null) {
-            readFileButton.setText("Reading file...");
-            readFileButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+        if (readFileButtonSerial.getText().equalsIgnoreCase("Read file") && selectFileDropSerial.getValue() != null) {
+            readFileButtonSerial.setText("Reading file...");
+            readFileButtonSerial.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
             task = new Task<Void>() {
                 @Override
                 public Void call() {
-                    try (Scanner scanner = new Scanner(new File("data/raw/" + selectFileDrop.getValue()));) {
+                    try (Scanner scanner = new Scanner(new File("data/raw/" + selectFileDropSerial.getValue()));) {
                         List<Integer> linijaPodataka;
                         while (scanner.hasNextLine()) {
                             if (isCancelled()) {
@@ -333,8 +333,8 @@ public class GUIController implements Initializable {
                     currentData.getData().clear();
                 }
             });
-            readFileButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
-            readFileButton.setText("Read file");
+            readFileButtonSerial.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+            readFileButtonSerial.setText("Read file");
         }
     }
 
@@ -351,20 +351,21 @@ public class GUIController implements Initializable {
 //        readFileButton.setStyle(IDLE_BUTTON_STYLE);
 //        readFileButton.setOnMouseEntered(e -> readFileButton.setStyle(HOVERED_BUTTON_STYLE));
 //        readFileButton.setOnMouseExited(e -> readFileButton.setStyle(IDLE_BUTTON_STYLE));
+
         selectPortDrop.getItems().clear();
         selectPortDrop.getItems().addAll(selectPortDropItems);
 
         selectFileDropItems = fileReader.getFileRawList(folderRaw);
 
-        selectFileDrop.getItems().clear();
-        selectFileDrop.getItems().addAll(selectFileDropItems);
+//        selectFileDropSerial.getItems().clear();
+        selectFileDropSerial.getItems().addAll(selectFileDropItems);
 
-//        graph.setCreateSymbols(false);
-//        graph.setAnimated(false);
+        graphSerial.setCreateSymbols(false);
+        graphSerial.setAnimated(false);
         voltageData.setName("Voltage");
         currentData.setName("Current");
 
-//        graph.getData().addAll(voltageData, currentData);
+        graphSerial.getData().addAll(voltageData, currentData);
     }
 
 }

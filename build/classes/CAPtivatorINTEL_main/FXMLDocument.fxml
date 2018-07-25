@@ -90,7 +90,7 @@
                         </VBox>
                         <VBox fx:id="readFileVBox">
                             <children>
-                                <LineChart fx:id="graphFile" prefHeight="369.0" prefWidth="543.0" VBox.vgrow="ALWAYS">
+                                <LineChart fx:id="graphFile" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
                                     <xAxis>
                                         <NumberAxis side="BOTTOM" />
                                     </xAxis>
@@ -134,12 +134,12 @@
                            <children>
                                       <HBox fx:id="toolsSerial" alignment="CENTER_LEFT" maxHeight="-Infinity" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
                                           <children>
-                                              <ComboBox fx:id="selectFileDropOld" prefHeight="25.0" prefWidth="102.0" promptText="Select file...">
+                                              <ComboBox fx:id="selectFileDropSerial" prefHeight="25.0" prefWidth="102.0" promptText="Select file...">
                                                   <HBox.margin>
                                                       <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
                                                   </HBox.margin>
                                               </ComboBox>
-                                              <ToggleButton fx:id="readFileButtonOld" mnemonicParsing="false" onAction="#handleFileReadClick" text="Read file">
+                                              <ToggleButton fx:id="readFileButtonSerial" mnemonicParsing="false" onAction="#handleFileReadClick" text="Read file">
                                                   <HBox.margin>
                                                       <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
                                                   </HBox.margin>
