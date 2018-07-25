@@ -2,12 +2,13 @@ package CAPtivatorINTEL_main;
 
 import FileHandling.FileReader;
 import com.fazecast.jSerialComm.SerialPort;
+import com.jfoenix.controls.JFXButton;
 import comms.CommHandler;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -17,19 +18,31 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.stage.Stage;
 
 public class GUIController implements Initializable {
 
@@ -55,8 +68,8 @@ public class GUIController implements Initializable {
     private int cycleAll = 0;
     private Double measuredCapacity = -1.0;
 
-    @FXML
-    private Region leftPanel;
+    double xOffset;
+    double yOffset;
 
     @FXML
     private LineChart<?, ?> graph;
@@ -69,7 +82,7 @@ public class GUIController implements Initializable {
     private ToggleButton readFileButton;
 
     @FXML
-    private Region bottomPanel;
+    private JFXButton minimiseButton, maximiseButton, closeButton;
 
     @FXML
     private TextField capacitorIDTextBox;
@@ -83,6 +96,109 @@ public class GUIController implements Initializable {
 
     @FXML
     private ToggleButton connectButton;
+
+    @FXML
+    private HBox topBar;
+
+    public void handleMinimiseButton() {
+        Stage stage = (Stage) minimiseButton.getScene().getWindow();
+        stage.setIconified(true);
+    }
+
+    public void handleMaximiseButton() {
+        Stage stage = (Stage) maximiseButton.getScene().getWindow();
+        if (stage.isMaximized()) {
+            stage.setMaximized(false);
+        } else {
+            stage.setMaximized(true);
+        }
+    }
+
+    public void handleCloseButton() {
+        Stage stage = (Stage) closeButton.getScene().getWindow();
+        stage.close();
+    }
+
+    public void resize(MouseEvent event) {
+        Stage stage = (Stage) maximiseButton.getScene().getWindow();
+        double newX = event.getScreenX() - stage.getX() + 13;
+        double newY = event.getScreenY() - stage.getY() + 10;
+        if (newX % 5 == 0 || newY % 5 == 0) {
+            if (newX > 550) {
+                stage.setWidth(newX);
+            } else {
+                stage.setWidth(550);
+            }
+
+            if (newY > 200) {
+                stage.setHeight(newY);
+            } else {
+                stage.setHeight(200);
+            }
+        }
+    }
+
+    public void movePressed(MouseEvent event) {
+
+        Stage stage = (Stage) maximiseButton.getScene().getWindow();
+
+        xOffset = event.getSceneX();
+        yOffset = event.getSceneY();
+    }
+    
+    public void move(MouseEvent event) {
+
+        Stage stage = (Stage) maximiseButton.getScene().getWindow();       
+
+        System.out.println(" xxxDragged " + xOffset + " " + yOffset);
+
+        stage.setX(event.getScreenX() - xOffset);
+        stage.setY(event.getScreenY() - yOffset);
+    }    
+
+    public void handleReadSerialButtonClick(ActionEvent event) {
+        try {
+            Parent readSerialParent = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLDocument.fxml"));
+            Scene readSerialScene = new Scene(readSerialParent);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+            readSerialScene.setRoot(readSerialParent);
+
+            stage.setScene(readSerialScene);
+            stage.show();
+
+        } catch (IOException ex) {
+            System.out.println("FXMLLoader was NOT successful!");
+        }
+    }
+
+    public void handleReadFileButtonClick(ActionEvent event) {
+        try {
+            Parent readFileParent = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLDocument.fxml"));
+            Scene readFileScene = new Scene(readFileParent);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+            stage.setScene(readFileScene);
+            stage.show();
+
+        } catch (IOException ex) {
+            System.out.println("FXMLLoader was NOT successful!");
+        }
+    }
+
+    public void handleReadStatsButtonClick(ActionEvent event) {
+        try {
+            Parent readStatsParent = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLDocument.fxml"));
+            Scene readStatsScene = new Scene(readStatsParent);
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+            stage.setScene(readStatsScene);
+            stage.show();
+
+        } catch (IOException ex) {
+            System.out.println("FXMLLoader was NOT successful!");
+        }
+    }
 
     public void handleConnectClick() {
 
@@ -136,7 +252,7 @@ public class GUIController implements Initializable {
                                         while ((tmp = br.readLine()) != null) {
                                             strLine = tmp;
                                         }
-                                        
+
                                         String lastLine = null;
 
                                         if (strLine != null) {
@@ -232,7 +348,7 @@ public class GUIController implements Initializable {
                                     @Override
                                     public void run() {
                                         voltageData.getData().add(new XYChart.Data(seconds, voltage));
-                                        currentData.getData().add(new XYChart.Data(seconds, current));                                        
+                                        currentData.getData().add(new XYChart.Data(seconds, current));
                                     }
                                 });
                             } catch (Exception ex) {
@@ -270,14 +386,12 @@ public class GUIController implements Initializable {
         final String IDLE_BUTTON_STYLE = "-fx-background-color: transparent;";
         final String HOVERED_BUTTON_STYLE = "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, -fx-body-color;";
 
-        connectButton.setStyle(IDLE_BUTTON_STYLE);
+//        connectButton.setStyle(IDLE_BUTTON_STYLE);
 //        connectButton.setOnMouseEntered(e -> connectButton.setStyle(HOVERED_BUTTON_STYLE));
 //        connectButton.setOnMouseExited(e -> connectButton.setStyle(IDLE_BUTTON_STYLE));
-
-        readFileButton.setStyle(IDLE_BUTTON_STYLE);
+//        readFileButton.setStyle(IDLE_BUTTON_STYLE);
 //        readFileButton.setOnMouseEntered(e -> readFileButton.setStyle(HOVERED_BUTTON_STYLE));
 //        readFileButton.setOnMouseExited(e -> readFileButton.setStyle(IDLE_BUTTON_STYLE));
-
         selectPortDrop.getItems().clear();
         selectPortDrop.getItems().addAll(selectPortDropItems);
 
@@ -286,13 +400,12 @@ public class GUIController implements Initializable {
         selectFileDrop.getItems().clear();
         selectFileDrop.getItems().addAll(selectFileDropItems);
 
-        graph.setCreateSymbols(false);
-        graph.setAnimated(false);
-
+//        graph.setCreateSymbols(false);
+//        graph.setAnimated(false);
         voltageData.setName("Voltage");
         currentData.setName("Current");
 
-        graph.getData().addAll(voltageData, currentData);
+//        graph.getData().addAll(voltageData, currentData);
     }
 
 }
