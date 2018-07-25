@@ -11,9 +11,6 @@
     -fx-background-radius: 0;
 }
 
-/*.hBox {
-    -fx-background-color: rgba(0,0,0,0.5); 
-}*/
 
 #leftBar {
     -fx-background-color: rgba(0, 100, 100, 0.1);

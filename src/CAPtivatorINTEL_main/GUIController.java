@@ -3,21 +3,24 @@ package CAPtivatorINTEL_main;
 import FileHandling.FileReader;
 import com.fazecast.jSerialComm.SerialPort;
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
 import comms.CommHandler;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -25,16 +28,13 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -46,7 +46,7 @@ public class GUIController implements Initializable {
     private FileWriter fileWriter;
     private FileWriter fileWriterAll;
     private final CommHandler comms = new CommHandler();
-    private SerialPort chosenPort;
+    private SerialPort chosenPort = null;
 
     private final File folderRaw = new File("data/raw/");
     private final File folderData = new File("data/");
@@ -67,31 +67,29 @@ public class GUIController implements Initializable {
     double xOffset;
     double yOffset;
 
+    boolean confirm = true;
+
     @FXML
     private LineChart<?, ?> graphSerial, graphFile, graphStats;
 
     @FXML
-    private ComboBox<String> selectFileDropSerial, selectPortDrop;
+    private JFXComboBox<String> selectFileDropSerial, selectPortDrop;
     ObservableList<String> selectFileDropItems;
-    
+
     @FXML
     ObservableList<String> selectPortDropItems = comms.getPortList();
 
     @FXML
-    private ToggleButton readFileButtonSerial;
+    private JFXButton readFileButtonSerial;
 
     @FXML
-    private JFXButton minimiseButton, maximiseButton, closeButton, serialReadButton, fileReadButton, statsReadButton;
+    private JFXButton minimiseButton, maximiseButton, closeButton, connectButton, serialReadButton, fileReadButton, statsReadButton;
 
     @FXML
     private TextField capacitorIDTextBox;
 
     @FXML
     private CheckBox writeFileCheck;
-
-
-    @FXML
-    private ToggleButton connectButton;
 
     @FXML
     private HBox topBar;
@@ -138,7 +136,6 @@ public class GUIController implements Initializable {
     }
 
     public void movePressed(MouseEvent event) {
-        Stage stage = (Stage) maximiseButton.getScene().getWindow();
         xOffset = event.getSceneX();
         yOffset = event.getSceneY();
     }
@@ -160,86 +157,98 @@ public class GUIController implements Initializable {
     }
 
     public void handleConnectClick() {
-
         if (connectButton.getText().equalsIgnoreCase("Connect")) {
-            comms.setChosenPort(SerialPort.getCommPort(selectPortDrop.getValue()));
-            chosenPort = comms.getChosenPort();
-            chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
-            if (chosenPort.openPort()) {
-                connectButton.setText("Connected");
-                connectButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
-                selectPortDrop.setDisable(true);
+            if (capacitorIDTextBox.getText().trim().isEmpty()) {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        Alert alert = new Alert(AlertType.CONFIRMATION);
+                        alert.setTitle("Warning!");
+                        alert.setHeaderText("Capacitor ID missing!");
+                        alert.setContentText("Are you sure you want to proceed without recording data?");
+                        ButtonType yes = new ButtonType("Yes");
+                        ButtonType cancel = new ButtonType("Cancel");
+                        alert.getButtonTypes().setAll(yes, cancel);
+                        Optional<ButtonType> result = alert.showAndWait();
+                        if (result.get() == cancel) {
+                            resetConnect();
+//                        task.cancel();
+                        } else {
+                            fileWriter = null;
+                        }
+                    }
+                });
             }
-
             task = new Task<Void>() {
                 @Override
                 public Void call() {
+                    System.out.println("Ušao u if (confirm)! ");
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            connectButton.setText("Connected");
+                            connectButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+                            selectPortDrop.setDisable(true);
+                        }
+                    });
+                    comms.setChosenPort(SerialPort.getCommPort(selectPortDrop.getValue()));
+                    chosenPort = comms.getChosenPort();
+                    chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
+                    chosenPort.openPort();
+                    confirm = true;
                     try (Scanner scanner = new Scanner(chosenPort.getInputStream())) {
                         List<Integer> linijaPodataka;
-                        while (scanner.hasNextLine()) {
-                            if (isCancelled()) {
-                                break;
-                            }
+                        while (scanner.hasNextLine() && confirm && !isCancelled()) {
                             try {
                                 String line = scanner.nextLine();
-//                            System.out.println(line);
-                                if (writeFileCheck.isSelected() && capacitorIDTextBox.getText() != null) {
-                                    if (line.contains("Discharging...")) {
-                                        LocalDateTime timestamp = LocalDateTime.now();
-                                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-//                                        System.out.println(dtf.format(timestamp));
-                                        String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + ++cycle + "_" + dtf.format(timestamp) + ".txt";
-                                        System.out.println(fileName);
-                                        try {
-                                            fileWriter = new FileWriter(fileName, false);
-                                        } catch (Exception ex) {
-                                            System.out.println("Unable to create file!");
-                                        }
-                                    }
-                                    if (line.contains("Discharge cycle") || line.contains("Charge cycle")) {
-                                        LocalDateTime timestamp = LocalDateTime.now();
-                                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-                                        String fileName = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
-                                        try {
-                                            fileWriterAll = new FileWriter(fileName, true);
-                                        } catch (Exception ex) {
-                                            System.out.println("Unable to create file!");
-                                        }
-                                        FileInputStream in = new FileInputStream(fileName);
-                                        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-                                        String strLine = null, tmp;
-                                        while ((tmp = br.readLine()) != null) {
-                                            strLine = tmp;
-                                        }
-
-                                        String lastLine = null;
-
-                                        if (strLine != null) {
-                                            lastLine = strLine.substring(strLine.indexOf(",") + 1, strLine.indexOf(",", strLine.indexOf(",") + 1));
-                                        } else {
-                                            lastLine = "0";
-                                        }
-                                        System.out.println(lastLine);
-                                        in.close();
-
-                                        cycleAll = Integer.parseInt(lastLine);
-
-                                        measuredCapacity = Double.parseDouble(line.substring(line.indexOf("=") + 2));
-
-                                        if (line.contains("Discharge cycle")) {
-                                            cycleAll++;
-                                        }
-
-                                        String data = capacitorIDTextBox.getText() + "," + cycleAll + "," + dtf.format(timestamp) + "," + measuredCapacity;
-
-                                        fileWriterAll.append(data + "\r\n");
-                                        fileWriterAll.flush();
-                                    }
-                                    if (line.contains("Measurement complete!")) {
-                                        fileWriter = null;
-                                        fileWriterAll = null;
+                                if (line.contains("Discharging...") && !capacitorIDTextBox.getText().trim().isEmpty()) {
+                                    LocalDateTime timestamp = LocalDateTime.now();
+                                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+                                    String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + ++cycle + "_" + dtf.format(timestamp) + ".txt";
+                                    System.out.println(fileName);
+                                    try {
+                                        fileWriter = new FileWriter(fileName, false);
+                                    } catch (Exception ex) {
+                                        System.out.println("Unable to create file!");
                                     }
                                 }
+                                if ((line.contains("Discharge cycle") || line.contains("Charge cycle")) && !capacitorIDTextBox.getText().trim().isEmpty()) {
+                                    LocalDateTime timestamp = LocalDateTime.now();
+                                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+                                    String fileName = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
+                                    try {
+                                        fileWriterAll = new FileWriter(fileName, true);
+                                    } catch (Exception ex) {
+                                        System.out.println("Unable to create file!");
+                                    }
+                                    FileInputStream in = new FileInputStream(fileName);
+                                    BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                                    String strLine = null, tmp;
+                                    while ((tmp = br.readLine()) != null) {
+                                        strLine = tmp;
+                                    }
+                                    String lastLine;
+                                    if (strLine != null) {
+                                        lastLine = strLine.substring(strLine.indexOf(",") + 1, strLine.indexOf(",", strLine.indexOf(",") + 1));
+                                    } else {
+                                        lastLine = "0";
+                                    }
+                                    System.out.println(lastLine);
+                                    in.close();
+                                    cycleAll = Integer.parseInt(lastLine);
+                                    measuredCapacity = Double.parseDouble(line.substring(line.indexOf("=") + 2));
+                                    if (line.contains("Discharge cycle")) {
+                                        cycleAll++;
+                                    }
+                                    String data = capacitorIDTextBox.getText() + "," + cycleAll + "," + dtf.format(timestamp) + "," + measuredCapacity;
+                                    fileWriterAll.append(data + "\r\n");
+                                    fileWriterAll.flush();
+                                }
+                                if (line.contains("Measurement complete!")) {
+                                    fileWriter = null;
+                                    fileWriterAll = null;
+                                }
+
                                 if (line.matches("\\d+,.*")) {
                                     linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
                                     voltage = linijaPodataka.get(0);
@@ -251,9 +260,17 @@ public class GUIController implements Initializable {
                                         public void run() {
                                             voltageData.getData().add(new XYChart.Data(seconds, voltage));
                                             currentData.getData().add(new XYChart.Data(seconds, current));
-                                            updateMessage("" + voltage + ", " + current + ", " + seconds);
-                                            System.out.println(getMessage());
+//                                            updateMessage("" + voltage + ", " + current + ", " + seconds);
+//                                            System.out.println(getMessage());
 //                                            capacitorIDTextBox.setText(getMessage());
+                                        }
+                                    });
+                                } else {
+                                    Platform.runLater(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            voltageData.getData().clear();
+                                            currentData.getData().clear();
                                         }
                                     });
                                 }
@@ -266,20 +283,31 @@ public class GUIController implements Initializable {
                             }
                         }
                     }
-
                     return null;
                 }
             };
             Thread th = new Thread(task);
             th.setDaemon(true);
             th.start();
+
         } else {
-//            graph.getData().clear();
-            chosenPort.closePort();
-            selectPortDrop.setDisable(false);
-            connectButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
-            connectButton.setText("Connect");
+            resetConnect();
         }
+    }
+
+    public void resetConnect() {
+        chosenPort.closePort();
+        confirm = false;
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                voltageData.getData().clear();
+                currentData.getData().clear();
+                selectPortDrop.setDisable(false);
+                connectButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+                connectButton.setText("Connect");
+            }
+        });
     }
 
     public void handleFileReadClick() {
@@ -297,7 +325,6 @@ public class GUIController implements Initializable {
                             }
                             try {
                                 String line = scanner.nextLine();
-//                            System.out.println(line);
                                 linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
                                 voltage = linijaPodataka.get(0);
                                 current = linijaPodataka.get(1);
@@ -338,28 +365,45 @@ public class GUIController implements Initializable {
         }
     }
 
+    public void handleStartMeasurementButton() {
+
+    }
+
+    public void handlePauseMeasurementButton() {
+
+    }
+
+    public void handleSelectPortDropClick() {
+//        task = new Task<Void>() {
+//            @Override
+//            public Void call() {
+//                Platform.runLater(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        selectPortDropItems = comms.getPortList();
+//                        if (selectPortDropItems.size() != selectPortDrop.getItems().size()) {
+//                            selectPortDrop.getItems().clear();
+//                            selectPortDrop.getItems().addAll(selectPortDropItems);
+//                        }
+//                    }
+//                });
+//                return null;
+//            }
+//        };
+//        Thread th = new Thread(task);
+//        th.setDaemon(true);
+//        th.start();
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources
     ) {
-
-        final String IDLE_BUTTON_STYLE = "-fx-background-color: transparent;";
-        final String HOVERED_BUTTON_STYLE = "-fx-shadow-highlight-color, -fx-outer-border, -fx-inner-border, -fx-body-color;";
-
-//        connectButton.setStyle(IDLE_BUTTON_STYLE);
-//        connectButton.setOnMouseEntered(e -> connectButton.setStyle(HOVERED_BUTTON_STYLE));
-//        connectButton.setOnMouseExited(e -> connectButton.setStyle(IDLE_BUTTON_STYLE));
-//        readFileButton.setStyle(IDLE_BUTTON_STYLE);
-//        readFileButton.setOnMouseEntered(e -> readFileButton.setStyle(HOVERED_BUTTON_STYLE));
-//        readFileButton.setOnMouseExited(e -> readFileButton.setStyle(IDLE_BUTTON_STYLE));
-
         selectPortDrop.getItems().clear();
         selectPortDrop.getItems().addAll(selectPortDropItems);
 
         selectFileDropItems = fileReader.getFileRawList(folderRaw);
 
-//        selectFileDropSerial.getItems().clear();
-        selectFileDropSerial.getItems().addAll(selectFileDropItems);
-
+//        selectFileDropSerial.getItems().addAll(selectFileDropItems);
         graphSerial.setCreateSymbols(false);
         graphSerial.setAnimated(false);
         voltageData.setName("Voltage");
