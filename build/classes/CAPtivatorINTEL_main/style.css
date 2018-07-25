@@ -1,7 +1,14 @@
+#hBox {
+    -fx-background-color: rgba(0, 100, 100, 0.1);
+}
+
+#leftBar {
+    -fx-background-color: rgba(0, 100, 100, 0.1);
+}
+
 .sideButtons:hover {
     -fx-background-color: #5A2728;
 }
-
 
 .sideButtons {
     -fx-background-radius: 0;
@@ -11,12 +18,9 @@
     -fx-background-radius: 0;
 }
 
-
-#leftBar {
-    -fx-background-color: rgba(0, 100, 100, 0.1);
+.buttonsTools {
+    -fx-background-radius: 0;
 }
 
 
-#hBox {
-    -fx-background-color: rgba(0, 100, 100, 0.1);
-}
+
