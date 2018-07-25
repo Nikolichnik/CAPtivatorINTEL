@@ -18,15 +18,11 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -41,7 +37,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class GUIController implements Initializable {
@@ -82,7 +78,7 @@ public class GUIController implements Initializable {
     private ToggleButton readFileButton;
 
     @FXML
-    private JFXButton minimiseButton, maximiseButton, closeButton;
+    private JFXButton minimiseButton, maximiseButton, closeButton, serialReadButton, fileReadButton, statsReadButton;
 
     @FXML
     private TextField capacitorIDTextBox;
@@ -99,6 +95,9 @@ public class GUIController implements Initializable {
 
     @FXML
     private HBox topBar;
+
+    @FXML
+    private VBox readStatsVBox, readFileVBox, readFromSerialVBox;
 
     public void handleMinimiseButton() {
         Stage stage = (Stage) minimiseButton.getScene().getWindow();
@@ -139,64 +138,24 @@ public class GUIController implements Initializable {
     }
 
     public void movePressed(MouseEvent event) {
-
         Stage stage = (Stage) maximiseButton.getScene().getWindow();
-
         xOffset = event.getSceneX();
         yOffset = event.getSceneY();
     }
-    
+
     public void move(MouseEvent event) {
-
-        Stage stage = (Stage) maximiseButton.getScene().getWindow();       
-
-        System.out.println(" xxxDragged " + xOffset + " " + yOffset);
-
+        Stage stage = (Stage) maximiseButton.getScene().getWindow();
         stage.setX(event.getScreenX() - xOffset);
         stage.setY(event.getScreenY() - yOffset);
-    }    
-
-    public void handleReadSerialButtonClick(ActionEvent event) {
-        try {
-            Parent readSerialParent = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLDocument.fxml"));
-            Scene readSerialScene = new Scene(readSerialParent);
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-            readSerialScene.setRoot(readSerialParent);
-
-            stage.setScene(readSerialScene);
-            stage.show();
-
-        } catch (IOException ex) {
-            System.out.println("FXMLLoader was NOT successful!");
-        }
     }
 
-    public void handleReadFileButtonClick(ActionEvent event) {
-        try {
-            Parent readFileParent = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLDocument.fxml"));
-            Scene readFileScene = new Scene(readFileParent);
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-            stage.setScene(readFileScene);
-            stage.show();
-
-        } catch (IOException ex) {
-            System.out.println("FXMLLoader was NOT successful!");
-        }
-    }
-
-    public void handleReadStatsButtonClick(ActionEvent event) {
-        try {
-            Parent readStatsParent = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLDocument.fxml"));
-            Scene readStatsScene = new Scene(readStatsParent);
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-            stage.setScene(readStatsScene);
-            stage.show();
-
-        } catch (IOException ex) {
-            System.out.println("FXMLLoader was NOT successful!");
+    public void handleSideButtonsClick(ActionEvent event) {
+        if (event.getSource() == serialReadButton) {
+            readFromSerialVBox.toFront();
+        } else if (event.getSource() == fileReadButton) {
+            readFileVBox.toFront();
+        } else if (event.getSource() == statsReadButton) {
+            readStatsVBox.toFront();
         }
     }
 
