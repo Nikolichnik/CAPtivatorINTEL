@@ -16,8 +16,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -32,7 +30,6 @@ import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
@@ -45,7 +42,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -323,12 +319,129 @@ public class GUIController implements Initializable {
         });
     }
 
-    public void handleAddFileClick() {
-        if (selectSessionDrop.getValue() != null) {
+    public void handleStartMeasurementButton() {
+
+    }
+
+    public void handlePauseMeasurementButton() {
+
+    }
+
+    public void handleSelectPortDropClick() {
+        selectPortDropItems = comms.getPortList();
+        if (selectPortDropItems.size() != selectPortDrop.getItems().size()) {
             task = new Task<Void>() {
                 @Override
                 public Void call() {
-                    try (Scanner scanner = new Scanner(new File("data/raw/" + selectCapacitorDrop.getValue() + selectSessionDrop.getValue()));) {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            selectPortDrop.getItems().clear();
+                            selectPortDrop.getItems().addAll(selectPortDropItems);
+                        }
+                    });
+                    return null;
+                }
+
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        }
+    }
+
+    public void handleSelectCapacitorDropClick() {
+        final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
+        if (files.size() != selectCapacitorDrop.getItems().size()) {
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            selectCapacitorDropItems.clear();                            
+                            for (String file : files) {
+                                selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
+                            }
+                            selectCapacitorDrop.getItems().addAll(selectCapacitorDropItems);
+                        }
+                    });
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        }
+    }
+
+    public void handleSelectSessionDropClick() {
+        if (selectCapacitorDrop.getValue() != null) {
+            final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            String item = "";
+                            DateFormat dtfIn = new SimpleDateFormat("yyyyMMddHHmm");
+                            DateFormat dtfOut = new SimpleDateFormat("dd/MM | HH:mm");
+                            selectSessionDropItems.clear();
+                            for (String file : files) {
+                                if (file.contains(selectCapacitorDrop.getValue())) {
+                                    item = file.substring(file.indexOf("_", file.indexOf("_") + 1) + 1, file.indexOf("."));
+                                    Date timestamp = null;
+                                    try {
+                                        timestamp = dtfIn.parse(item);
+                                    } catch (ParseException ex) {
+                                        System.out.println("File name format incorrect!");
+                                    }
+                                    selectSessionDropItems.add(dtfOut.format(timestamp) + " | " + file.substring(file.indexOf("_") + 1, file.indexOf("_", file.indexOf("_") + 1)));
+                                }
+                            }
+                            selectSessionDrop.getItems().clear();
+                            selectSessionDrop.getItems().addAll(selectSessionDropItems);
+                        }
+                    });
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        } else {
+            Alert alert = new Alert(AlertType.WARNING);
+            alert.setTitle("Warning!");
+            alert.setHeaderText("Capacitor ID not selected!");
+            alert.setContentText("Please select capacitor ID in order to continue.");
+            alert.showAndWait();
+        }
+    }
+
+    public void handleAddFileClick() {
+        if (selectSessionDrop.getValue() != null) {
+            DateFormat dtfIn = new SimpleDateFormat("dd/MM | HH:mm");
+            DateFormat dtfOut = new SimpleDateFormat("MMddHHmm");
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    String item = selectSessionDrop.getValue();
+                    item = item.substring(0, item.indexOf("|", item.indexOf("|") + 1)).trim();
+                    Date timestampIn = null;
+                    try {
+                        timestampIn = dtfIn.parse(item);
+                    } catch (ParseException ex) {
+                        System.out.println("Unlikely case of parsing date exception :)");;
+                    }
+                    item = dtfOut.format(timestampIn);
+                    String address = "data/raw/";
+                    for (String file : fileReader.getFileRawList(folderRaw)) {
+                        if (file.contains(selectCapacitorDrop.getValue()) && file.contains(item)) {
+                            address += file;
+                        }
+                    }
+                    try (Scanner scanner = new Scanner(new File(address));) {
                         List<Integer> linijaPodataka;
                         while (scanner.hasNextLine() && !isCancelled()) {
                             try {
@@ -363,8 +476,7 @@ public class GUIController implements Initializable {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
-                    voltageDataFile.getData().clear();
-                    currentDataFile.getData().clear();
+
                 }
             });
         }
@@ -375,107 +487,23 @@ public class GUIController implements Initializable {
     }
 
     public void handleRemoveAllFilesClick() {
+        task = new Task<Void>() {
+            @Override
+            public Void call() {
+                Platform.runLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        voltageDataFile.getData().clear();
+                        currentDataFile.getData().clear();
+                    }
+                });
 
-    }
-
-    public void handleStartMeasurementButton() {
-
-    }
-
-    public void handlePauseMeasurementButton() {
-
-    }
-
-    public void handleSelectPortDropClick() {
-        selectPortDropItems = comms.getPortList();
-        if (selectPortDropItems.size() != selectPortDrop.getItems().size()) {
-            task = new Task<Void>() {
-                @Override
-                public Void call() {
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            selectPortDrop.getItems().clear();
-                            selectPortDrop.getItems().addAll(selectPortDropItems);
-                        }
-                    });
-                    return null;
-                }
-            };
-            Thread th = new Thread(task);
-            th.setDaemon(true);
-            th.start();
-        }
-    }
-
-    public void handleSelectCapacitorDropClick() {
-        final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
-        if (files.size() != selectCapacitorDrop.getItems().size()) {
-            task = new Task<Void>() {
-                @Override
-                public Void call() {
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            selectCapacitorDropItems.clear();
-                            for (String file : files) {
-                                selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
-                            }
-                            selectCapacitorDrop.getItems().clear();
-                            selectCapacitorDrop.getItems().addAll(selectCapacitorDropItems);
-                        }
-                    });
-                    return null;
-                }
-            };
-            Thread th = new Thread(task);
-            th.setDaemon(true);
-            th.start();
-        }
-    }
-
-    public void handleSelectSessionDropClick() {
-        if (selectCapacitorDrop.getValue() != null) {
-            final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
-            task = new Task<Void>() {
-                @Override
-                public Void call() {
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            String item = "";
-                            DateFormat dtf = new SimpleDateFormat("yyyyMMddHHmm");
-                            DateFormat dtfOut = new SimpleDateFormat("dd/MM | HH:MM");
-                            selectSessionDropItems.clear();
-                            for (String file : files) {
-                                if (file.contains(selectCapacitorDrop.getValue())) {
-                                    item = file.substring(file.indexOf("_", file.indexOf("_") + 1) + 1, file.indexOf("."));
-                                    Date timestamp = null;                                    
-                                    try {
-                                        timestamp = dtf.parse(item);
-                                    } catch (ParseException ex) {
-                                        System.out.println("File name format incorrect!");
-                                    }
-                                    selectSessionDropItems.add(dtfOut.format(timestamp) + " | " + file.substring(file.indexOf("_") + 1, file.indexOf("_", file.indexOf("_") + 1)));
-                                }
-                            }
-                            selectSessionDrop.getItems().clear();
-                            selectSessionDrop.getItems().addAll(selectSessionDropItems);
-                        }
-                    });
-                    return null;
-                }
-            };
-            Thread th = new Thread(task);
-            th.setDaemon(true);
-            th.start();
-        } else {
-            Alert alert = new Alert(AlertType.WARNING);
-            alert.setTitle("Warning!");
-            alert.setHeaderText("Capacitor ID not selected!");
-            alert.setContentText("Please select capacitor ID in order to continue.");
-            alert.showAndWait();
-        }
+                return null;
+            }
+        };
+        Thread th = new Thread(task);
+        th.setDaemon(true);
+        th.start();
     }
 
     @Override
