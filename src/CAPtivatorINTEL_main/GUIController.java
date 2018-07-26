@@ -57,9 +57,6 @@ public class GUIController implements Initializable {
     private final XYChart.Series voltageData = new XYChart.Series();
     private final XYChart.Series currentData = new XYChart.Series();
 
-    private final XYChart.Series voltageDataFile = new XYChart.Series();
-    private final XYChart.Series currentDataFile = new XYChart.Series();
-
     private final XYChart.Series stats = new XYChart.Series();
     private final XYChart.Series statsDates = new XYChart.Series();
 
@@ -357,7 +354,7 @@ public class GUIController implements Initializable {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            selectCapacitorDropItems.clear();                            
+                            selectCapacitorDropItems.clear();
                             for (String file : files) {
                                 selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
                             }
@@ -439,6 +436,10 @@ public class GUIController implements Initializable {
                             address += file;
                         }
                     }
+                    XYChart.Series voltageDataFile = new XYChart.Series();
+                    voltageDataFile.setName(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue() + "_U");
+                    XYChart.Series currentDataFile = new XYChart.Series();
+                    currentDataFile.setName(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue() + "_I");
                     try (Scanner scanner = new Scanner(new File(address));) {
                         List<Integer> linijaPodataka;
                         while (scanner.hasNextLine() && !isCancelled()) {
@@ -463,6 +464,12 @@ public class GUIController implements Initializable {
                     } catch (Exception ex) {
                         System.out.println("File not found!");
                     }
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            graphFile.getData().addAll(voltageDataFile, currentDataFile);
+                        }
+                    });
                     return null;
                 }
             };
@@ -470,38 +477,30 @@ public class GUIController implements Initializable {
             th.setDaemon(true);
             th.start();
         } else {
-            System.out.println("Entered else for file button");
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-
-                }
-            });
+            Alert alert = new Alert(AlertType.WARNING);
+            alert.setTitle("Warning!");
+            alert.setHeaderText("Session not selected!");
+            alert.setContentText("Please select session in order to continue.");
+            alert.showAndWait();
         }
     }
 
     public void handleRemoveFileClick() {
-
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                graphFile.getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));
+            }
+        });
     }
 
     public void handleRemoveAllFilesClick() {
-        task = new Task<Void>() {
+        Platform.runLater(new Runnable() {
             @Override
-            public Void call() {
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        voltageDataFile.getData().clear();
-                        currentDataFile.getData().clear();
-                    }
-                });
-
-                return null;
+            public void run() {
+                graphFile.getData().clear();
             }
-        };
-        Thread th = new Thread(task);
-        th.setDaemon(true);
-        th.start();
+        });
     }
 
     @Override
@@ -528,9 +527,8 @@ public class GUIController implements Initializable {
         graphFile.getXAxis().setLabel("t [s]");
         graphFile.getYAxis().setLabel("I/U [mA/mV]");
         graphFile.setLegendSide(Side.BOTTOM);
-        voltageDataFile.setName("Voltage");
-        currentDataFile.setName("Current");
-        graphFile.getData().addAll(voltageDataFile, currentDataFile);
+//        voltageDataFile.setName("Voltage");
+//        currentDataFile.setName("Current");
 
         graphStats.setCreateSymbols(false);
         graphStats.setAnimated(false);
