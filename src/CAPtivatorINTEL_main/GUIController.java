@@ -405,18 +405,18 @@ public class GUIController implements Initializable {
         graphSerial.setAnimated(false);
         graphSerial.getXAxis().setLabel("t [s]");
         graphSerial.getYAxis().setLabel("I/U [mA/mV]");
-        graphSerial.setLegendSide(Side.RIGHT);
-        voltageData.setName("U");
-        currentData.setName("I");
+        graphSerial.setLegendSide(Side.BOTTOM);
+        voltageData.setName("Voltage");
+        currentData.setName("Current");
         graphSerial.getData().addAll(voltageData, currentData);
 
         graphFile.setCreateSymbols(false);
         graphFile.setAnimated(false);
         graphFile.getXAxis().setLabel("t [s]");
         graphFile.getYAxis().setLabel("I/U [mA/mV]");
-        graphFile.setLegendSide(Side.RIGHT);
-        voltageDataFile.setName("U");
-        currentDataFile.setName("I");
+        graphFile.setLegendSide(Side.BOTTOM);
+        voltageDataFile.setName("Voltage");
+        currentDataFile.setName("Current");
         graphFile.getData().addAll(voltageDataFile, currentDataFile);
         
         
@@ -424,19 +424,19 @@ public class GUIController implements Initializable {
         graphStats.setAnimated(false);
         graphStats.getXAxis().setLabel("t [s]");
         graphStats.getYAxis().setLabel("I/U [mA/mV]");
-        graphStats.setLegendSide(Side.RIGHT);
-        voltageDataStats.setName("U");
-        currentDataStats.setName("I");        
+        graphStats.setLegendSide(Side.BOTTOM);
+        voltageDataStats.setName("Voltage");
+        currentDataStats.setName("Current");        
         graphStats.getData().addAll(voltageDataStats, currentDataStats);
         
-        graphStatsDates.setCreateSymbols(false);
-        graphStatsDates.setAnimated(false);
-        graphStatsDates.getXAxis().setLabel("t [s]");
-        graphStatsDates.getYAxis().setLabel("I/U [mA/mV]");
-        graphStatsDates.setLegendSide(Side.RIGHT);
-        voltageDataStatsDates.setName("U");
-        currentDataStatsDates.setName("I");
-        graphStatsDates.getData().addAll(voltageDataStatsDates, currentDataStatsDates);
+//        graphStatsDates.setCreateSymbols(false);
+//        graphStatsDates.setAnimated(false);
+//        graphStatsDates.getXAxis().setLabel("t [s]");
+//        graphStatsDates.getYAxis().setLabel("I/U [mA/mV]");
+//        graphStatsDates.setLegendSide(Side.BOTTOM);
+//        voltageDataStatsDates.setName("Voltage");
+//        currentDataStatsDates.setName("Current");
+//        graphStatsDates.getData().addAll(voltageDataStatsDates, currentDataStatsDates);
 
         selectFileDropItems = fileReader.getFileRawList(folderRaw);
         selectFileDrop.getItems().addAll(selectFileDropItems);
