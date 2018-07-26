@@ -19,8 +19,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -28,12 +26,12 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
+import javafx.geometry.Side;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
@@ -57,6 +55,11 @@ public class GUIController implements Initializable {
     private final XYChart.Series voltageDataFile = new XYChart.Series();
     private final XYChart.Series currentDataFile = new XYChart.Series();
 
+    private final XYChart.Series voltageDataStats = new XYChart.Series();
+    private final XYChart.Series currentDataStats = new XYChart.Series();
+    private final XYChart.Series voltageDataStatsDates = new XYChart.Series();
+    private final XYChart.Series currentDataStatsDates = new XYChart.Series();
+
     private int voltage = 0;
     private int current = 0;
     private int seconds = 0;
@@ -73,10 +76,10 @@ public class GUIController implements Initializable {
     boolean confirm = true;
 
     @FXML
-    private LineChart<?, ?> graphSerial, graphFile, graphStats;
+    private LineChart<?, ?> graphSerial, graphFile, graphStats, graphStatsDates;
 
     @FXML
-    private JFXComboBox<String> selectFileDropSerial, selectFileDrop, selectPortDrop;
+    private JFXComboBox<String> selectFileDrop, selectPortDrop;
     ObservableList<String> selectFileDropItems;
 
     @FXML
@@ -87,12 +90,6 @@ public class GUIController implements Initializable {
 
     @FXML
     private TextField capacitorIDTextBox;
-
-    @FXML
-    private CheckBox writeFileCheck;
-
-    @FXML
-    private HBox topBar;
 
     @FXML
     private VBox readStatsVBox, readFileVBox, readFromSerialVBox;
@@ -265,10 +262,7 @@ public class GUIController implements Initializable {
                                             @Override
                                             public void run() {
                                                 voltageData.getData().add(new XYChart.Data(seconds, voltage));
-                                                currentData.getData().add(new XYChart.Data(seconds, current));
-//                                            updateMessage("" + voltage + ", " + current + ", " + seconds);
-//                                            System.out.println(getMessage());
-//                                            capacitorIDTextBox.setText(getMessage());
+                                                currentData.getData().add(new XYChart.Data(seconds, current));//                                            
                                             }
                                         });
                                     } else {
@@ -409,15 +403,40 @@ public class GUIController implements Initializable {
 
         graphSerial.setCreateSymbols(false);
         graphSerial.setAnimated(false);
-        voltageData.setName("Voltage");
-        currentData.setName("Current");
+        graphSerial.getXAxis().setLabel("t [s]");
+        graphSerial.getYAxis().setLabel("I/U [mA/mV]");
+        graphSerial.setLegendSide(Side.RIGHT);
+        voltageData.setName("U");
+        currentData.setName("I");
         graphSerial.getData().addAll(voltageData, currentData);
 
         graphFile.setCreateSymbols(false);
-        graphFile.setAnimated(true);
-        voltageDataFile.setName("Voltage");
-        currentDataFile.setName("Current");
+        graphFile.setAnimated(false);
+        graphFile.getXAxis().setLabel("t [s]");
+        graphFile.getYAxis().setLabel("I/U [mA/mV]");
+        graphFile.setLegendSide(Side.RIGHT);
+        voltageDataFile.setName("U");
+        currentDataFile.setName("I");
         graphFile.getData().addAll(voltageDataFile, currentDataFile);
+        
+        
+        graphStats.setCreateSymbols(false);
+        graphStats.setAnimated(false);
+        graphStats.getXAxis().setLabel("t [s]");
+        graphStats.getYAxis().setLabel("I/U [mA/mV]");
+        graphStats.setLegendSide(Side.RIGHT);
+        voltageDataStats.setName("U");
+        currentDataStats.setName("I");        
+        graphStats.getData().addAll(voltageDataStats, currentDataStats);
+        
+        graphStatsDates.setCreateSymbols(false);
+        graphStatsDates.setAnimated(false);
+        graphStatsDates.getXAxis().setLabel("t [s]");
+        graphStatsDates.getYAxis().setLabel("I/U [mA/mV]");
+        graphStatsDates.setLegendSide(Side.RIGHT);
+        voltageDataStatsDates.setName("U");
+        currentDataStatsDates.setName("I");
+        graphStatsDates.getData().addAll(voltageDataStatsDates, currentDataStatsDates);
 
         selectFileDropItems = fileReader.getFileRawList(folderRaw);
         selectFileDrop.getItems().addAll(selectFileDropItems);
