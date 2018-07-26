@@ -91,42 +91,6 @@
                         </StackPane>
                             </children>
                         </VBox>
-                        <VBox fx:id="readFileVBox">
-                            <children>
-                                <LineChart fx:id="graphFile" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
-                                    <xAxis>
-                                        <NumberAxis side="BOTTOM" />
-                                    </xAxis>
-                                    <yAxis>
-                                        <NumberAxis side="LEFT" />
-                                    </yAxis>
-                                </LineChart>
-                        <StackPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" VBox.vgrow="ALWAYS">
-                           <children>
-                                      <HBox fx:id="toolsFile" alignment="CENTER_LEFT" maxHeight="-Infinity" onMouseDragged="#resize" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
-                                          <children>
-                                    <JFXComboBox fx:id="selectFileDrop" focusColor="#5a2728" promptText="Select file...">
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                                       </HBox.margin>
-                                    </JFXComboBox>
-                                    <JFXButton fx:id="readFileButton" onAction="#handleFileReadClick" prefHeight="25.0" prefWidth="69.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Read file">
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                                       </HBox.margin>
-                                    </JFXButton>
-                                              <Region fx:id="bottomPanelFile" prefHeight="31.0" prefWidth="73.0" HBox.hgrow="ALWAYS" />
-                                    <JFXComboBox fx:id="clearAll" focusColor="#5a2728" layoutX="10.0" layoutY="14.0" promptText="Select COM port..." />
-                                          </children>
-                                      </HBox>
-                              <Pane fx:id="dragPaneFile" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
-                                 <cursor>
-                                    <Cursor fx:constant="NW_RESIZE" />
-                                 </cursor></Pane>
-                           </children>
-                        </StackPane>
-                            </children>
-                        </VBox>
                         <VBox fx:id="readFromSerialVBox">
                             <children>
                                 <LineChart fx:id="graphSerial" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
@@ -141,31 +105,113 @@
                            <children>
                                       <HBox fx:id="toolsSerial" alignment="CENTER_LEFT" maxHeight="-Infinity" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
                                           <children>
-                                    <JFXButton fx:id="startMeasurementButton" onAction="#handleStartMeasurementButton" prefHeight="25.0" prefWidth="69.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Start">
+                                    <JFXButton fx:id="startMeasurementButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleStartMeasurementButton" prefHeight="25.0" prefWidth="69.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Start">
                                        <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                          <Insets bottom="3.0" left="6.0" right="3.0" top="3.0" />
                                        </HBox.margin>
                                     </JFXButton>
-                                    <JFXButton fx:id="startMeasurementButton" layoutX="494.0" layoutY="14.0" onAction="#handlePauseMeasurementButton" prefHeight="25.0" prefWidth="69.0" ripplerFill="#5a2728" styleClass="buttonsTools" stylesheets="@style.css" text="Pause">
+                                    <JFXButton fx:id="pauseMeasurementButton" layoutX="494.0" layoutY="14.0" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handlePauseMeasurementButton" prefHeight="25.0" prefWidth="69.0" ripplerFill="#5a2728" styleClass="buttonsTools" stylesheets="@style.css" text="Pause">
                                        <HBox.margin>
                                           <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
                                        </HBox.margin>
                                     </JFXButton>
                                               <Region prefHeight="31.0" prefWidth="73.0" HBox.hgrow="ALWAYS" />
-                                    <JFXTextField fx:id="capacitorIDTextBox" focusColor="#5a2728" promptText="Enter capacitor ID..." />
-                                    <JFXComboBox fx:id="selectPortDrop" focusColor="#5a2728" onAction="#handleSelectPortDropClick" promptText="Select COM port...">
+                                    <JFXTextField fx:id="capacitorIDTextBox" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="25.0" prefWidth="113.0" promptText="Enter capacitor ID..." />
+                                    <ImageView fx:id="spacer" fitHeight="21.0" fitWidth="5.0" pickOnBounds="true">
+                                       <image>
+                                          <Image url="@resources/img/spacer.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="13.0" right="13.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <JFXComboBox fx:id="selectPortDrop" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMousePressed="#handleSelectPortDropClick" prefHeight="25.0" prefWidth="99.0" promptText="Select COM...">
                                        <HBox.margin>
                                           <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
                                        </HBox.margin>
                                     </JFXComboBox>
-                                    <JFXButton fx:id="connectButton" layoutX="83.0" layoutY="14.0" onAction="#handleConnectClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Connect">
+                                    <ImageView fx:id="spacer" fitHeight="21.0" fitWidth="5.0" layoutX="319.0" layoutY="14.0" pickOnBounds="true">
+                                       <image>
+                                          <Image url="@resources/img/spacer.png" />
+                                       </image>
                                        <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                          <Insets bottom="3.0" left="13.0" right="6.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <JFXButton fx:id="connectButton" layoutX="83.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleConnectClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Connect">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="9.0" top="3.0" />
                                        </HBox.margin>
                                     </JFXButton>
                                           </children>
                                       </HBox>
                               <Pane fx:id="dragPaneSerial" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
+                                 <cursor>
+                                    <Cursor fx:constant="NW_RESIZE" />
+                                 </cursor></Pane>
+                           </children>
+                        </StackPane>
+                            </children>
+                        </VBox>
+                        <VBox fx:id="readFileVBox">
+                            <children>
+                                <LineChart fx:id="graphFile" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
+                                    <xAxis>
+                                        <NumberAxis side="BOTTOM" />
+                                    </xAxis>
+                                    <yAxis>
+                                        <NumberAxis side="LEFT" />
+                                    </yAxis>
+                                </LineChart>
+                        <StackPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" VBox.vgrow="ALWAYS">
+                           <children>
+                                      <HBox fx:id="toolsFile" alignment="CENTER_LEFT" maxHeight="-Infinity" onMouseDragged="#resize" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
+                                          <children>
+                                    <JFXComboBox fx:id="selectCapacitorDrop" editable="true" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseEntered="#handleSelectCapacitorDropClick" onMousePressed="#handleSelectCapacitorDropClick" prefHeight="25.0" prefWidth="113.0" promptText="Select capacitor...">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="9.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXComboBox>
+                                    <ImageView fx:id="spacer1" fitHeight="21.0" fitWidth="5.0" pickOnBounds="true">
+                                       <image>
+                                          <Image url="@resources/img/spacer.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="9.0" right="9.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <JFXComboBox fx:id="selectSessionDrop" focusColor="#5a2728" layoutX="16.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMousePressed="#handleSelectSessionDropClick" prefHeight="25.0" prefWidth="113.0" promptText="Select session...">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXComboBox>
+                                    <ImageView fx:id="spacer11" fitHeight="21.0" fitWidth="5.0" layoutX="145.0" layoutY="16.0" pickOnBounds="true">
+                                       <image>
+                                          <Image url="@resources/img/spacer.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="9.0" right="9.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <JFXButton fx:id="addFileButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleAddFileClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Add file">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXButton>
+                                    <JFXButton fx:id="removeFileButton" layoutX="303.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleRemoveFileClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" styleClass="buttonsTools" stylesheets="@style.css" text="Remove file">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXButton>
+                                              <Region fx:id="bottomPanelFile" prefHeight="31.0" prefWidth="73.0" HBox.hgrow="ALWAYS" />
+                                    <JFXButton fx:id="removeAllFilesButton" layoutX="303.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleRemoveAllFilesClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728; -fx-background-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Remove all" textFill="WHITESMOKE">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="4.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXButton>
+                                          </children>
+                                      </HBox>
+                              <Pane fx:id="dragPaneFile" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
                                  <cursor>
                                     <Cursor fx:constant="NW_RESIZE" />
                                  </cursor></Pane>

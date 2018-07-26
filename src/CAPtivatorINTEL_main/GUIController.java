@@ -11,17 +11,28 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
@@ -77,14 +88,14 @@ public class GUIController implements Initializable {
     private LineChart<?, ?> graphSerial, graphFile, graphStats, graphStatsDates;
 
     @FXML
-    private JFXComboBox<String> selectFileDrop, selectPortDrop;
-    ObservableList<String> selectFileDropItems;
+    private JFXComboBox<String> selectPortDrop, selectCapacitorDrop, selectSessionDrop;
+    ObservableList<String> selectPortDropItems, selectCapacitorDropItems, selectSessionDropItems;
 
     @FXML
-    ObservableList<String> selectPortDropItems = comms.getPortList();
-
-    @FXML
-    private JFXButton minimiseButton, maximiseButton, closeButton, connectButton, serialReadButton, fileReadButton, statsReadButton, readFileButton;
+    private JFXButton minimiseButton, maximiseButton, closeButton,
+            startMeasurementButton, pauseMeasurementButton, connectButton,
+            serialReadButton, fileReadButton, statsReadButton,
+            addFileButton, removeFileButton, removeAllFilesButton;
 
     @FXML
     private TextField capacitorIDTextBox;
@@ -205,7 +216,7 @@ public class GUIController implements Initializable {
                                     if (line.contains("Discharging...") && !capacitorIDTextBox.getText().trim().isEmpty()) {
                                         LocalDateTime timestamp = LocalDateTime.now();
                                         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-                                        String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + ++cycle + "_" + dtf.format(timestamp) + ".txt";
+                                        String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + dtf.format(timestamp) + "_" + ++cycle + ".txt";
                                         System.out.println(fileName);
                                         try {
                                             fileWriter = new FileWriter(fileName, false);
@@ -312,14 +323,12 @@ public class GUIController implements Initializable {
         });
     }
 
-    public void handleFileReadClick() {
-        if (readFileButton.getText().equalsIgnoreCase("Read file") && selectFileDrop.getValue() != null) {
-            readFileButton.setText("Reading file...");
-            readFileButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+    public void handleAddFileClick() {
+        if (selectSessionDrop.getValue() != null) {
             task = new Task<Void>() {
                 @Override
                 public Void call() {
-                    try (Scanner scanner = new Scanner(new File("data/raw/" + selectFileDrop.getValue()));) {
+                    try (Scanner scanner = new Scanner(new File("data/raw/" + selectCapacitorDrop.getValue() + selectSessionDrop.getValue()));) {
                         List<Integer> linijaPodataka;
                         while (scanner.hasNextLine() && !isCancelled()) {
                             try {
@@ -358,9 +367,15 @@ public class GUIController implements Initializable {
                     currentDataFile.getData().clear();
                 }
             });
-            readFileButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
-            readFileButton.setText("Read file");
         }
+    }
+
+    public void handleRemoveFileClick() {
+
+    }
+
+    public void handleRemoveAllFilesClick() {
+
     }
 
     public void handleStartMeasurementButton() {
@@ -372,31 +387,106 @@ public class GUIController implements Initializable {
     }
 
     public void handleSelectPortDropClick() {
-//        task = new Task<Void>() {
-//            @Override
-//            public Void call() {
-//                Platform.runLater(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        selectPortDropItems = comms.getPortList();
-//                        if (selectPortDropItems.size() != selectPortDrop.getItems().size()) {
-//                            selectPortDrop.getItems().clear();
-//                            selectPortDrop.getItems().addAll(selectPortDropItems);
-//                        }
-//                    }
-//                });
-//                return null;
-//            }
-//        };
-//        Thread th = new Thread(task);
-//        th.setDaemon(true);
-//        th.start();
+        selectPortDropItems = comms.getPortList();
+        if (selectPortDropItems.size() != selectPortDrop.getItems().size()) {
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            selectPortDrop.getItems().clear();
+                            selectPortDrop.getItems().addAll(selectPortDropItems);
+                        }
+                    });
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        }
+    }
+
+    public void handleSelectCapacitorDropClick() {
+        final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
+        if (files.size() != selectCapacitorDrop.getItems().size()) {
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            selectCapacitorDropItems.clear();
+                            for (String file : files) {
+                                selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
+                            }
+                            selectCapacitorDrop.getItems().clear();
+                            selectCapacitorDrop.getItems().addAll(selectCapacitorDropItems);
+                        }
+                    });
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        }
+    }
+
+    public void handleSelectSessionDropClick() {
+        if (selectCapacitorDrop.getValue() != null) {
+            final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            String item = "";
+                            DateFormat dtf = new SimpleDateFormat("yyyyMMddHHmm");
+                            DateFormat dtfOut = new SimpleDateFormat("dd/MM | HH:MM");
+                            selectSessionDropItems.clear();
+                            for (String file : files) {
+                                if (file.contains(selectCapacitorDrop.getValue())) {
+                                    item = file.substring(file.indexOf("_", file.indexOf("_") + 1) + 1, file.indexOf("."));
+                                    Date timestamp = null;                                    
+                                    try {
+                                        timestamp = dtf.parse(item);
+                                    } catch (ParseException ex) {
+                                        System.out.println("File name format incorrect!");
+                                    }
+                                    selectSessionDropItems.add(dtfOut.format(timestamp) + " | " + file.substring(file.indexOf("_") + 1, file.indexOf("_", file.indexOf("_") + 1)));
+                                }
+                            }
+                            selectSessionDrop.getItems().clear();
+                            selectSessionDrop.getItems().addAll(selectSessionDropItems);
+                        }
+                    });
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        } else {
+            Alert alert = new Alert(AlertType.WARNING);
+            alert.setTitle("Warning!");
+            alert.setHeaderText("Capacitor ID not selected!");
+            alert.setContentText("Please select capacitor ID in order to continue.");
+            alert.showAndWait();
+        }
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        selectPortDrop.getItems().clear();
+        selectPortDropItems = comms.getPortList();
         selectPortDrop.getItems().addAll(selectPortDropItems);
+
+        selectCapacitorDropItems = FXCollections.observableArrayList();
+        handleSelectCapacitorDropClick();
+
+        selectSessionDropItems = FXCollections.observableArrayList();
 
         graphSerial.setCreateSymbols(false);
         graphSerial.setAnimated(false);
@@ -428,10 +518,7 @@ public class GUIController implements Initializable {
 //        graphStatsDates.getXAxis().setLabel("Number of cycles");
 //        graphStatsDates.getYAxis().setLabel("C [F]");
 //        graphStats.setLegendVisible(false);
-//        graphStatsDates.getData().addAll(statsDates);
-        
-        selectFileDropItems = fileReader.getFileRawList(folderRaw);
-        selectFileDrop.getItems().addAll(selectFileDropItems);
+//        graphStatsDates.getData().addAll(statsDates);        
     }
 
 }

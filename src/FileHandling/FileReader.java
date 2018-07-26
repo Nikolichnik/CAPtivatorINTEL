@@ -12,6 +12,7 @@ public class FileReader {
 
     public ObservableList<String> getFileRawList(File folderRaw) {
         
+        selectFileDropItems.clear();
         File[] listOfFiles = folderRaw.listFiles();
 
         for (File file : listOfFiles) {

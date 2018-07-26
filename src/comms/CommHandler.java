@@ -13,7 +13,7 @@ public class CommHandler implements Initializable {
 
     private SerialPort chosenPort;
     private String input;
-    private SerialPort[] portNames = SerialPort.getCommPorts();
+    private SerialPort[] portNames;
     private final ObservableList<String> portList = FXCollections.observableArrayList();
 
     public SerialPort getChosenPort() {
@@ -30,17 +30,11 @@ public class CommHandler implements Initializable {
 
     public void setInput(String input) {
         this.input = input;
-    }
-
-    public SerialPort[] getPortNames() {
-        return portNames;
-    }
-
-    public void setPortNames(SerialPort[] portNames) {
-        this.portNames = portNames;
-    }
+    }   
 
     public ObservableList<String> getPortList() {
+        portNames = SerialPort.getCommPorts();
+        portList.clear();
         for (SerialPort portName : this.portNames) {
             portList.add(portName.getSystemPortName());
         }
