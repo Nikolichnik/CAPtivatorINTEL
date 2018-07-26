@@ -146,10 +146,28 @@ public class GUIController implements Initializable {
     public void handleSideButtonsClick(ActionEvent event) {
         if (event.getSource() == serialReadButton) {
             readFromSerialVBox.toFront();
+            serialReadButton.setStyle("-fx-background-color: #5A2728;");
+            fileReadButton.setStyle("-fx-background-color: transparent;");
+            statsReadButton.setStyle("-fx-background-color: transparent;");
+            serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: #5A2728;"));
+            fileReadButton.setOnMouseExited(e -> fileReadButton.setStyle("-fx-background-color: transparent;"));
+            statsReadButton.setOnMouseExited(e -> statsReadButton.setStyle("-fx-background-color: transparent;"));
         } else if (event.getSource() == fileReadButton) {
             readFileVBox.toFront();
+            serialReadButton.setStyle("-fx-background-color: transparent;");
+            fileReadButton.setStyle("-fx-background-color: #5A2728;");
+            statsReadButton.setStyle("-fx-background-color: transparent;");
+            serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: transparent;"));
+            fileReadButton.setOnMouseExited(e -> fileReadButton.setStyle("-fx-background-color: #5A2728;"));
+            statsReadButton.setOnMouseExited(e -> statsReadButton.setStyle("-fx-background-color: transparent;"));
         } else if (event.getSource() == statsReadButton) {
             readStatsVBox.toFront();
+            serialReadButton.setStyle("-fx-background-color: transparent;");
+            fileReadButton.setStyle("-fx-background-color: transparent;");
+            statsReadButton.setStyle("-fx-background-color: #5A2728;");
+            serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: transparent;"));
+            fileReadButton.setOnMouseExited(e -> fileReadButton.setStyle("-fx-background-color: transparent;"));
+            statsReadButton.setOnMouseExited(e -> statsReadButton.setStyle("-fx-background-color: #5A2728;"));
         }
     }
 
@@ -505,6 +523,13 @@ public class GUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        serialReadButton.setOnMouseEntered(e -> serialReadButton.setStyle("-fx-background-color: #5A2728;"));
+        serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: transparent;"));
+        fileReadButton.setOnMouseEntered(e -> fileReadButton.setStyle("-fx-background-color: #5A2728;"));
+        fileReadButton.setOnMouseExited(e -> fileReadButton.setStyle("-fx-background-color: transparent;"));
+        statsReadButton.setOnMouseEntered(e -> statsReadButton.setStyle("-fx-background-color: #5A2728;"));
+        statsReadButton.setOnMouseExited(e -> statsReadButton.setStyle("-fx-background-color: transparent;"));
+
         selectPortDropItems = comms.getPortList();
         selectPortDrop.getItems().addAll(selectPortDropItems);
 
@@ -521,6 +546,11 @@ public class GUIController implements Initializable {
         voltageData.setName("Voltage");
         currentData.setName("Current");
         graphSerial.getData().addAll(voltageData, currentData);
+
+        readFromSerialVBox.toFront();
+        serialReadButton.setStyle("-fx-background-color: #5A2728;");
+        fileReadButton.setStyle("-fx-background-color: transparent;");
+        statsReadButton.setStyle("-fx-background-color: transparent;");
 
         graphFile.setCreateSymbols(false);
         graphFile.setAnimated(false);
