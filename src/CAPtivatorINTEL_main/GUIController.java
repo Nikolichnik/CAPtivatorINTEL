@@ -396,8 +396,7 @@ public class GUIController implements Initializable {
     }
 
     @Override
-    public void initialize(URL location, ResourceBundle resources
-    ) {
+    public void initialize(URL location, ResourceBundle resources) {
         selectPortDrop.getItems().clear();
         selectPortDrop.getItems().addAll(selectPortDropItems);
 
@@ -418,17 +417,16 @@ public class GUIController implements Initializable {
         voltageDataFile.setName("Voltage");
         currentDataFile.setName("Current");
         graphFile.getData().addAll(voltageDataFile, currentDataFile);
-        
-        
+
         graphStats.setCreateSymbols(false);
         graphStats.setAnimated(false);
         graphStats.getXAxis().setLabel("t [s]");
         graphStats.getYAxis().setLabel("I/U [mA/mV]");
         graphStats.setLegendSide(Side.BOTTOM);
         voltageDataStats.setName("Voltage");
-        currentDataStats.setName("Current");        
+        currentDataStats.setName("Current");
         graphStats.getData().addAll(voltageDataStats, currentDataStats);
-        
+
 //        graphStatsDates.setCreateSymbols(false);
 //        graphStatsDates.setAnimated(false);
 //        graphStatsDates.getXAxis().setLabel("t [s]");
