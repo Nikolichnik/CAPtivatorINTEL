@@ -55,10 +55,8 @@ public class GUIController implements Initializable {
     private final XYChart.Series voltageDataFile = new XYChart.Series();
     private final XYChart.Series currentDataFile = new XYChart.Series();
 
-    private final XYChart.Series voltageDataStats = new XYChart.Series();
-    private final XYChart.Series currentDataStats = new XYChart.Series();
-    private final XYChart.Series voltageDataStatsDates = new XYChart.Series();
-    private final XYChart.Series currentDataStatsDates = new XYChart.Series();
+    private final XYChart.Series stats = new XYChart.Series();
+    private final XYChart.Series statsDates = new XYChart.Series();
 
     private int voltage = 0;
     private int current = 0;
@@ -420,22 +418,18 @@ public class GUIController implements Initializable {
 
         graphStats.setCreateSymbols(false);
         graphStats.setAnimated(false);
-        graphStats.getXAxis().setLabel("t [s]");
-        graphStats.getYAxis().setLabel("I/U [mA/mV]");
-        graphStats.setLegendSide(Side.BOTTOM);
-        voltageDataStats.setName("Voltage");
-        currentDataStats.setName("Current");
-        graphStats.getData().addAll(voltageDataStats, currentDataStats);
+        graphStats.getXAxis().setLabel("Number of cycles");
+        graphStats.getYAxis().setLabel("C [F]");
+        graphStats.setLegendVisible(false);
+        graphStats.getData().addAll(stats);
 
 //        graphStatsDates.setCreateSymbols(false);
 //        graphStatsDates.setAnimated(false);
-//        graphStatsDates.getXAxis().setLabel("t [s]");
-//        graphStatsDates.getYAxis().setLabel("I/U [mA/mV]");
-//        graphStatsDates.setLegendSide(Side.BOTTOM);
-//        voltageDataStatsDates.setName("Voltage");
-//        currentDataStatsDates.setName("Current");
-//        graphStatsDates.getData().addAll(voltageDataStatsDates, currentDataStatsDates);
-
+//        graphStatsDates.getXAxis().setLabel("Number of cycles");
+//        graphStatsDates.getYAxis().setLabel("C [F]");
+//        graphStats.setLegendVisible(false);
+//        graphStatsDates.getData().addAll(statsDates);
+        
         selectFileDropItems = fileReader.getFileRawList(folderRaw);
         selectFileDrop.getItems().addAll(selectFileDropItems);
     }
