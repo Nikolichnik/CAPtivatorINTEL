@@ -583,7 +583,7 @@ public class GUIController implements Initializable {
     }
 
     public VBox createDataCard(String cID, String cTimestamp, boolean file) {
-        int cNominal = 0, cInitial = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 21, dataFieldHeight = 13;
+        int cNominal = 0, cInitial = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 21;
         int Cmin = 0, Cmiddle = 0, Cmax = 0, Imin = 0, Imiddle = 0, Imax = 0;
         double Qmin = 0, Qmiddle = 0, Qmax = 0, Emin = 0, Emiddle = 0, Emax = 0;
 
