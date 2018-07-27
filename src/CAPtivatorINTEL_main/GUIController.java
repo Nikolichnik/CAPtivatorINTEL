@@ -8,7 +8,9 @@ import comms.CommHandler;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.DateFormat;
@@ -24,6 +26,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -32,14 +36,20 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.chart.XYChart.Data;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -60,9 +70,7 @@ public class GUIController implements Initializable {
     private final XYChart.Series stats = new XYChart.Series();
     private final XYChart.Series statsDates = new XYChart.Series();
 
-    private int voltage = 0;
-    private int current = 0;
-    private int seconds = 0;
+    private int voltage = 0, current = 0, seconds = 0;
 
     private Task task;
 
@@ -70,10 +78,9 @@ public class GUIController implements Initializable {
     private int cycleAll = 0;
     private Double measuredCapacity = -1.0;
 
-    double xOffset;
-    double yOffset;
+    private double xOffset, yOffset, cVoltage = 2.7;
 
-    boolean confirm = true;
+    private boolean confirm = true;
 
     @FXML
     private LineChart<?, ?> graphSerial, graphFile, graphStats, graphStatsDates;
@@ -93,6 +100,9 @@ public class GUIController implements Initializable {
 
     @FXML
     private VBox readStatsVBox, readFileVBox, readFromSerialVBox;
+
+    @FXML
+    private HBox fileCardsStack, dataCardsStack;
 
     public void handleMinimiseButton() {
         Stage stage = (Stage) minimiseButton.getScene().getWindow();
@@ -172,6 +182,23 @@ public class GUIController implements Initializable {
     }
 
     public void handleConnectClick() {
+
+        String fileNameAll = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";   // Possibly move out of thread
+        try {
+            fileWriterAll = new FileWriter(fileNameAll, true);
+        } catch (Exception ex) {
+            System.out.println("Unable to create file!");
+        }
+
+        List<String> listOfFiles = fileReader.getFileRawList(folderData);
+        boolean virgin = false;
+
+        for (String file : listOfFiles) {
+            if (file.contains(capacitorIDTextBox.getText())) {
+                virgin = true;
+            }
+        }
+
         if (selectPortDrop.getValue() == null) {
             Alert alert = new Alert(AlertType.WARNING);
             alert.setTitle("Warning!");
@@ -199,7 +226,30 @@ public class GUIController implements Initializable {
                     fileWriter = null;
                     confirm = true;
                 }
+            } else if (virgin) {                                                // If new capacitor iD
+                System.out.println("Entered new ID");
+                LocalDateTime timestamp = LocalDateTime.now();
+                DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+
+                TextInputDialog dialog = new TextInputDialog();
+                dialog.setTitle("Initial setup");
+                dialog.setHeaderText("New capacitor ID detected!");
+                dialog.setContentText("Please enter nominal capacity:");
+                Optional<String> result = dialog.showAndWait();
+
+                double nominalCapacity = 0.0;
+
+                if (result.isPresent()) {
+                    nominalCapacity = Double.parseDouble(result.get());
+                }
+                try {
+                    fileWriterAll.append("#," + dtf.format(timestamp) + "," + nominalCapacity + "\r\n");
+                    fileWriterAll.flush();
+                } catch (IOException ex) {
+                    System.out.println("Initial value NOT set!");
+                }
             }
+
             if (confirm) {
                 task = new Task<Void>() {
                     @Override
@@ -217,6 +267,7 @@ public class GUIController implements Initializable {
                         chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
                         chosenPort.openPort();
                         confirm = true;
+
                         try (Scanner scanner = new Scanner(chosenPort.getInputStream())) {
                             List<Integer> linijaPodataka;
                             while (scanner.hasNextLine() && confirm && !isCancelled()) {
@@ -226,7 +277,6 @@ public class GUIController implements Initializable {
                                         LocalDateTime timestamp = LocalDateTime.now();
                                         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
                                         String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + dtf.format(timestamp) + "_" + ++cycle + ".txt";
-                                        System.out.println(fileName);
                                         try {
                                             fileWriter = new FileWriter(fileName, false);
                                         } catch (Exception ex) {
@@ -236,13 +286,8 @@ public class GUIController implements Initializable {
                                     if ((line.contains("Discharge cycle") || line.contains("Charge cycle")) && !capacitorIDTextBox.getText().trim().isEmpty()) {
                                         LocalDateTime timestamp = LocalDateTime.now();
                                         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-                                        String fileName = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
-                                        try {
-                                            fileWriterAll = new FileWriter(fileName, true);
-                                        } catch (Exception ex) {
-                                            System.out.println("Unable to create file!");
-                                        }
-                                        FileInputStream in = new FileInputStream(fileName);
+                                        ///
+                                        FileInputStream in = new FileInputStream(fileNameAll);
                                         BufferedReader br = new BufferedReader(new InputStreamReader(in));
                                         String strLine = null, tmp;
                                         while ((tmp = br.readLine()) != null) {
@@ -261,7 +306,7 @@ public class GUIController implements Initializable {
                                         if (line.contains("Discharge cycle")) {
                                             cycleAll++;
                                         }
-                                        String data = capacitorIDTextBox.getText() + "," + cycleAll + "," + dtf.format(timestamp) + "," + measuredCapacity;
+                                        String data = cycleAll + "," + dtf.format(timestamp) + "," + measuredCapacity;
                                         fileWriterAll.append(data + "\r\n");
                                         fileWriterAll.flush();
                                     }
@@ -313,7 +358,7 @@ public class GUIController implements Initializable {
         } else {
             resetConnect();
         }
-    }
+    } // Add check if cID is entered for the first time and prompt for nominal C value
 
     public void resetConnect() {
         if (chosenPort != null) {
@@ -519,6 +564,182 @@ public class GUIController implements Initializable {
                 graphFile.getData().clear();
             }
         });
+    }
+
+    public void handleSelectStatsDrop() {
+
+    }
+
+    public void handleAddStatsButtonClick() {
+
+    }
+
+    public void handleClearStatsButtonClick() {
+
+    }
+
+    public void handleClearAllStatsButtonClick() {
+
+    }
+
+    public VBox createDataCard(String cID, String cTimestamp, boolean file) {
+        int cNominal = 0, cInitial = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 21, dataFieldHeight = 13;
+        int Cmin = 0, Cmiddle = 0, Cmax = 0, Imin = 0, Imiddle = 0, Imax = 0;
+        double Qmin = 0, Qmiddle = 0, Qmax = 0, Emin = 0, Emiddle = 0, Emax = 0;
+
+        String addressData = "data/" + cID + "_all.txt";
+        String addressRaw = "data/raw/";
+
+        String dateStart, dateLast, days;
+
+        DateFormat dtfIn = new SimpleDateFormat("YYYYMMddHHmm");
+        DateFormat dtfOut = new SimpleDateFormat("dd/MM");
+        Date dateStartRaw = new Date();
+        Date dateLastRaw = new Date();
+
+        for (String fileRaw : fileReader.getFileRawList(folderRaw)) {
+            if (fileRaw.contains(cID) && fileRaw.contains(cTimestamp)) {
+                addressRaw += fileRaw;
+            }
+        }
+
+        List<Integer> capacitances = new LinkedList();
+        List<String> dates = new LinkedList();
+        try (Scanner scanner = new Scanner(new File(addressData));) {
+            while (scanner.hasNextLine()) {
+                if (!scanner.nextLine().contains("#")) {
+                    capacitances.add(Collections.list(new StringTokenizer(scanner.nextLine(), ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList()).get(2));
+                    dates.add(Collections.list(new StringTokenizer(scanner.nextLine(), ",", false)).stream().map(token -> (String) token).collect(Collectors.toList()).get(1));
+                } else {
+                    cNominal = Integer.parseInt(scanner.nextLine().substring(scanner.nextLine().lastIndexOf(",") + 1, scanner.nextLine().length() - 1));
+                }
+                if (scanner.nextLine().contains(cTimestamp)) {
+                    cMeasured = Integer.parseInt(scanner.nextLine().substring(scanner.nextLine().lastIndexOf(",") + 1, scanner.nextLine().length() - 1));
+                }
+            }
+            cInitial = capacitances.get(0);
+
+            if (!file) {
+                int sum = 0;
+                for (Integer capacitance : capacitances) {
+                    sum += capacitance;
+                }
+                Cmiddle = sum / capacitances.size();
+            } else {
+                Cmiddle = cMeasured;
+            }
+            Collections.sort(capacitances);
+
+            Cmin = capacitances.get(0);
+            Cmax = capacitances.get(capacitances.size() - 1);
+
+            try {
+                dateStartRaw = dtfIn.parse(dates.get(0));
+                dateLastRaw = dtfIn.parse(dates.get(dates.size() - 1));
+            } catch (ParseException ex) {
+                System.out.println("Parsing dates broke!");
+            }
+        } catch (FileNotFoundException ex) {
+            System.out.println("Something wrong with file or parsing while making dataCard!");
+        }
+
+        List<Integer> currents = new LinkedList();
+        if (file) {
+            try (Scanner scanner = new Scanner(new File(addressRaw));) {
+                while (scanner.hasNextLine()) {
+                    currents.add(Collections.list(new StringTokenizer(scanner.nextLine(), ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList()).get(2));
+                }
+                int sum = 0;
+                for (Integer curr : currents) {
+                    sum += curr;
+                }
+                Imiddle = sum / currents.size();
+
+                Collections.sort(currents);
+
+                Imin = currents.get(0);
+                Imax = currents.get(currents.size() - 1);
+
+            } catch (FileNotFoundException ex) {
+                System.out.println("Raw file not found!");
+            }
+        }
+
+        if (Cmin != 0) { // 'cause if one is set, all are.
+            Qmin = 0.5 * Cmin * cVoltage;
+            Qmiddle = 0.5 * Cmiddle * cVoltage;
+            Qmax = 0.5 * Cmax * cVoltage;
+
+            Emin = 0.5 * Cmin * cVoltage;
+            Emiddle = 0.5 * Cmiddle * cVoltage;
+            Emax = 0.5 * Cmax * cVoltage;
+        }
+
+        VBox dataCard = new VBox();
+        dataCard.setPrefSize(vBoxWidth, 2000);
+        dataCard.setMinWidth(vBoxWidth);
+        dataCard.setMaxWidth(vBoxWidth);
+
+        Label title = new Label(cID);
+        if (file) {
+            title.setText(cID + " | " + cTimestamp);
+        }
+        title.setMinSize(vBoxWidth, titleHeight);
+        title.setMaxSize(vBoxWidth, titleHeight);
+        title.setAlignment(Pos.CENTER);
+
+        ObservableList<PieChart.Data> doughnutNominalData = FXCollections.observableArrayList();
+        ObservableList<PieChart.Data> doughnutInitialData = FXCollections.observableArrayList();
+
+        DoughnutChart doughnutNominal = new DoughnutChart(doughnutNominalData);
+        DoughnutChart doughnutInitial = new DoughnutChart(doughnutInitialData);
+
+//        PieChart.Data doughnutNominalChartData = new PieChart.Data("% of nominal", percentNominal);
+//        PieChart.Data doughnutInitialChartData = new PieChart.Data("% of initial", percentInitial);
+
+        VBox cellCapacitance = createDataCell("C[F]", Cmin, Cmiddle, Cmax);
+        VBox cellQ = createDataCell("Q[J]", Qmin, Qmiddle, Qmax);
+        VBox cellEnergy = createDataCell("E[J]", Emin, Emiddle, Emax);
+
+        dataCard.getChildren().addAll(title, doughnutNominal, doughnutInitial, cellCapacitance);
+
+        if (file) {
+            VBox cellCurrent = createDataCell("I[mA]", Imin, Imiddle, Imax);
+            dataCard.getChildren().addAll(cellCurrent);
+        }
+
+        dataCard.getChildren().addAll(cellQ, cellEnergy);
+        return dataCard;
+    }
+
+    public VBox createDataCell(String title, double leftValue, double middleValue, double rightValue) {
+        VBox dataCell = new VBox();
+        dataCell.setMaxSize(90, 70);
+        dataCell.setMinSize(90, 70);
+
+        Label cellTitle = new Label(title);
+        cellTitle.setAlignment(Pos.CENTER);
+        cellTitle.setMaxHeight(20);
+        cellTitle.setMinHeight(20);
+
+        HBox values = new HBox();
+
+        String leftString = String.valueOf(leftValue);
+        String middleString = String.valueOf(middleValue);
+        String rightString = String.valueOf(rightValue);
+
+        Label left = new Label(leftString);
+        left.setAlignment(Pos.CENTER);
+        Label middle = new Label(middleString);
+        middle.setAlignment(Pos.CENTER);
+        Label right = new Label(rightString);
+        right.setAlignment(Pos.CENTER);
+
+        values.getChildren().addAll(left, middle, right);
+
+        dataCell.getChildren().addAll(cellTitle, values);
+
+        return dataCell;
     }
 
     @Override
