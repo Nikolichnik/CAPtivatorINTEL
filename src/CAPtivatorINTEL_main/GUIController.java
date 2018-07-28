@@ -43,6 +43,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
@@ -61,6 +62,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javax.swing.border.EmptyBorder;
 
@@ -80,7 +83,7 @@ public class GUIController implements Initializable {
 
     private final XYChart.Series stats = new XYChart.Series();
     private final XYChart.Series statsDates = new XYChart.Series();
-
+    
     private int voltage = 0, current = 0, seconds = 0;
 
     private Task task;
@@ -96,7 +99,10 @@ public class GUIController implements Initializable {
     DropShadow dropShadow = new DropShadow();
 
     @FXML
-    private LineChart<?, ?> graphSerial, graphFile, graphStats, graphStatsDates;
+    private LineChart<?, ?> graphSerial, graphFile, graphStats;
+    
+    @FXML
+    private BarChart graphStatsCapacities;
 
     @FXML
     private JFXComboBox<String> selectPortDrop, selectCapacitorDrop, selectSessionDrop;
@@ -544,6 +550,7 @@ public class GUIController implements Initializable {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
+                            System.out.println(sessionID);
                             graphFile.getData().addAll(voltageDataFile, currentDataFile);
                             fileCardsStack.getChildren().add(createDataCard(selectCapacitorDrop.getValue(), sessionID, true));
                         }
@@ -568,7 +575,7 @@ public class GUIController implements Initializable {
             @Override
             public void run() {
                 graphFile.getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));
-                fileCardsStack.getChildren().stream().filter((card) -> (card.getId() == null ? selectCapacitorDrop.getValue() + selectSessionDrop.getValue() == null : card.getId().equals(selectCapacitorDrop.getValue() + selectSessionDrop.getValue()))).forEachOrdered((card) -> {
+                fileCardsStack.getChildren().stream().filter((card) -> (card.getId() == null ? false : card.getId().contains(selectCapacitorDrop.getValue()))).forEachOrdered((card) -> {
                     fileCardsStack.getChildren().remove(card);
                 });
             }
@@ -612,10 +619,8 @@ public class GUIController implements Initializable {
 
         String dateStart = "N/A", dateLast = "N/A";
 
-        DateTimeFormatter dtfIn = DateTimeFormatter.ofPattern("YYYYMMddHHmm");
+        DateTimeFormatter dtfIn = DateTimeFormatter.ofPattern("uuuuMMddHHmm");
         DateTimeFormatter dtfOut = DateTimeFormatter.ofPattern("dd/MM");
-        LocalDate dateStartRaw;
-        LocalDate dateLastRaw;
 
         for (String fileRaw : fileReader.getFileRawList(folderRaw)) {
             if (fileRaw.contains(cID) && fileRaw.contains(cTimestamp)) {
@@ -627,16 +632,25 @@ public class GUIController implements Initializable {
         List<String> dates = new LinkedList();
         try (Scanner scanner = new Scanner(new File(addressData));) {
             while (scanner.hasNextLine()) {
-                if (!scanner.nextLine().contains("#")) {
-                    capacitances.add(Collections.list(new StringTokenizer(scanner.nextLine(), ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList()).get(2));
-                    dates.add(Collections.list(new StringTokenizer(scanner.nextLine(), ",", false)).stream().map(token -> (String) token).collect(Collectors.toList()).get(1));
+                String line = scanner.nextLine();
+                if (line.contains("#")) {
+                    cNominal = Integer.parseInt(line.substring(line.lastIndexOf(",") + 1, line.length()));
+                    System.out.println(cNominal);
                 } else {
-                    cNominal = Integer.parseInt(scanner.nextLine().substring(scanner.nextLine().lastIndexOf(",") + 1, scanner.nextLine().length() - 1));
+                    System.out.println(Integer.parseInt(line.substring(line.lastIndexOf(",") + 1, line.length())));
+                    capacitances.add(Integer.parseInt(line.substring(line.lastIndexOf(",") + 1, line.length())));
+                    System.out.println(Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> (String) token).collect(Collectors.toList()).get(1));
+                    dates.add(Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> (String) token).collect(Collectors.toList()).get(1));
                 }
-                if (scanner.nextLine().contains(cTimestamp)) {
-                    cMeasured = Integer.parseInt(scanner.nextLine().substring(scanner.nextLine().lastIndexOf(",") + 1, scanner.nextLine().length() - 1));
+                if (line.contains(cTimestamp)) {
+                    cMeasured = Integer.parseInt(line.substring(line.lastIndexOf(",") + 1, line.length()));
                 }
             }
+        } catch (FileNotFoundException ex) {
+            System.out.println("_all file not found!!");
+        }
+
+        if (capacitances.size() != 0) {
             cInitial = capacitances.get(0);
             cLast = capacitances.get(capacitances.size() - 1);
             if (!file) {
@@ -652,15 +666,14 @@ public class GUIController implements Initializable {
 
             Cmin = capacitances.get(0);
             Cmax = capacitances.get(capacitances.size() - 1);
+        }
 
-            dateStartRaw = (LocalDate) dtfIn.parse(dates.get(0));
+        if (dates.size() != 0) {
+            LocalDate dateStartRaw = LocalDate.parse(dates.get(0), dtfIn);
             dateStart = dtfOut.format(dateStartRaw);
-            dateLastRaw = (LocalDate) dtfIn.parse(dates.get(dates.size() - 1));
+            LocalDate dateLastRaw = LocalDate.parse(dates.get(dates.size() - 1), dtfIn);
             dateLast = dtfOut.format(dateLastRaw);
             days = ChronoUnit.DAYS.between(dateStartRaw, dateLastRaw);
-
-        } catch (FileNotFoundException ex) {
-            System.out.println("Something wrong with file or parsing while making dataCard!");
         }
 
         List<Integer> currents = new LinkedList();
@@ -754,7 +767,7 @@ public class GUIController implements Initializable {
         return dataCard;
     }
 
-    public VBox createDataCell(String title, int leftValue, int middleValue, int rightValue) {
+    public VBox createDataCell(String title, double leftValue, double middleValue, double rightValue) {
         VBox dataCell = new VBox();
         dataCell.setMaxSize(90, 45);
         dataCell.setAlignment(Pos.CENTER);
@@ -772,27 +785,34 @@ public class GUIController implements Initializable {
         HBox values = new HBox();
         values.setAlignment(Pos.CENTER);
 
-        String leftString = String.valueOf(leftValue);
-        String middleString = String.valueOf(middleValue);
-        String rightString = String.valueOf(rightValue);
+        String leftString = String.valueOf((int) leftValue);
+        String middleString = String.valueOf((int) middleValue);
+        String rightString = String.valueOf((int) rightValue);
 
         Label leftPad = new Label();
-        leftPad.setMinWidth(3);
+        leftPad.setMinWidth(1);
+        leftPad.setMaxWidth(1);
 
         Label left = new Label(leftString);
+        left.setFont(new Font(9.0));
         left.setMinWidth(26);
+        left.setMaxWidth(26);
         left.setAlignment(Pos.CENTER);
 
         Label middle = new Label(middleString);
-        middle.setMinWidth(26);
+        middle.setPrefWidth(33);
         middle.setAlignment(Pos.CENTER);
+        
 
         Label right = new Label(rightString);
+        right.setFont(new Font(9.0));
         right.setMinWidth(26);
+        right.setMaxWidth(26);
         right.setAlignment(Pos.CENTER);
 
         Label rightPad = new Label();
-        rightPad.setMinWidth(3);
+        rightPad.setMinWidth(1);
+        rightPad.setMaxWidth(1);
 
         values.setMaxHeight(23);
         values.setMinHeight(23);
@@ -820,25 +840,29 @@ public class GUIController implements Initializable {
         HBox values = new HBox();
         values.setAlignment(Pos.CENTER);
 
-        String middleString = String.valueOf(days);
-
         Label leftPad = new Label();
-        leftPad.setMinWidth(3);
+        leftPad.setMinWidth(1);
+        leftPad.setMaxWidth(1);
 
         Label left = new Label(dateStart);
+        left.setFont(new Font(9.0));
         left.setMinWidth(26);
-        left.setAlignment(Pos.CENTER);
+        left.setMaxWidth(26);
+        left.setAlignment(Pos.CENTER_LEFT);
 
-        Label middle = new Label(middleString);
+        Label middle = new Label(String.valueOf(days));
         middle.setMinWidth(26);
         middle.setAlignment(Pos.CENTER);
 
         Label right = new Label(dateLast);
+        right.setFont(new Font(9.0));
         right.setMinWidth(26);
-        right.setAlignment(Pos.CENTER);
+        right.setMaxWidth(26);
+        right.setAlignment(Pos.CENTER_RIGHT);
 
         Label rightPad = new Label();
-        rightPad.setMinWidth(3);
+        rightPad.setMinWidth(1);
+        rightPad.setMaxWidth(1);
 
         values.setMaxHeight(23);
         values.setMinHeight(23);
@@ -895,7 +919,7 @@ public class GUIController implements Initializable {
         graphStats.getData().addAll(stats);
 
         dropShadow.setRadius(10);
-        dropShadow.setColor(Color.color(0, 0, 0, 0.3));
+        dropShadow.setColor(Color.color(0, 0, 0, 0.2));
 
     }
 
