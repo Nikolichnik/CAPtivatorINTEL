@@ -19,7 +19,7 @@ public class DoughnutChart extends PieChart {
         super(pieData);
 
         StackPane stack = new StackPane();
-        Text text = new Text(pieData.get(0) + "%");
+        Text text = new Text("bla");  //pieData.get(0).toString()
         innerCircle = new Circle();
         
         innerCircle.setFill(Color.WHITESMOKE);  // do in CSS!
@@ -27,6 +27,8 @@ public class DoughnutChart extends PieChart {
         innerCircle.setStrokeWidth(3);
         
         text.setBoundsType(TextBoundsType.VISUAL);
+        
+        stack.setMaxSize(90, 130);
         
         stack.getChildren().addAll(innerCircle, text);
     }

@@ -16,8 +16,11 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -36,8 +39,10 @@ import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
@@ -48,10 +53,16 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.effect.Effect;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javax.swing.border.EmptyBorder;
 
 public class GUIController implements Initializable {
 
@@ -81,6 +92,8 @@ public class GUIController implements Initializable {
     private double xOffset, yOffset, cVoltage = 2.7;
 
     private boolean confirm = true;
+
+    DropShadow dropShadow = new DropShadow();
 
     @FXML
     private LineChart<?, ?> graphSerial, graphFile, graphStats, graphStatsDates;
@@ -484,18 +497,18 @@ public class GUIController implements Initializable {
             task = new Task<Void>() {
                 @Override
                 public Void call() {
-                    String item = selectSessionDrop.getValue();
-                    item = item.substring(0, item.indexOf("|", item.indexOf("|") + 1)).trim();
+                    String session = selectSessionDrop.getValue();
+                    session = session.substring(0, session.indexOf("|", session.indexOf("|") + 1)).trim();
                     Date timestampIn = null;
                     try {
-                        timestampIn = dtfIn.parse(item);
+                        timestampIn = dtfIn.parse(session);
                     } catch (ParseException ex) {
                         System.out.println("Unlikely case of parsing date exception :)");;
                     }
-                    item = dtfOut.format(timestampIn);
+                    session = dtfOut.format(timestampIn);
                     String address = "data/raw/";
                     for (String file : fileReader.getFileRawList(folderRaw)) {
-                        if (file.contains(selectCapacitorDrop.getValue()) && file.contains(item)) {
+                        if (file.contains(selectCapacitorDrop.getValue()) && file.contains(session)) {
                             address += file;
                         }
                     }
@@ -527,10 +540,12 @@ public class GUIController implements Initializable {
                     } catch (Exception ex) {
                         System.out.println("File not found!");
                     }
+                    final String sessionID = session;
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
                             graphFile.getData().addAll(voltageDataFile, currentDataFile);
+                            fileCardsStack.getChildren().add(createDataCard(selectCapacitorDrop.getValue(), sessionID, true));
                         }
                     });
                     return null;
@@ -553,6 +568,9 @@ public class GUIController implements Initializable {
             @Override
             public void run() {
                 graphFile.getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));
+                fileCardsStack.getChildren().stream().filter((card) -> (card.getId() == null ? selectCapacitorDrop.getValue() + selectSessionDrop.getValue() == null : card.getId().equals(selectCapacitorDrop.getValue() + selectSessionDrop.getValue()))).forEachOrdered((card) -> {
+                    fileCardsStack.getChildren().remove(card);
+                });
             }
         });
     }
@@ -562,6 +580,7 @@ public class GUIController implements Initializable {
             @Override
             public void run() {
                 graphFile.getData().clear();
+                fileCardsStack.getChildren().clear();
             }
         });
     }
@@ -583,19 +602,20 @@ public class GUIController implements Initializable {
     }
 
     public VBox createDataCard(String cID, String cTimestamp, boolean file) {
-        int cNominal = 0, cInitial = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 21;
+        int cNominal = 0, cInitial = 0, cLast = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 21;
         int Cmin = 0, Cmiddle = 0, Cmax = 0, Imin = 0, Imiddle = 0, Imax = 0;
-        double Qmin = 0, Qmiddle = 0, Qmax = 0, Emin = 0, Emiddle = 0, Emax = 0;
+        int Qmin = 0, Qmiddle = 0, Qmax = 0, Emin = 0, Emiddle = 0, Emax = 0;
+        long days = 0;
 
         String addressData = "data/" + cID + "_all.txt";
         String addressRaw = "data/raw/";
 
-        String dateStart, dateLast, days;
+        String dateStart = "N/A", dateLast = "N/A";
 
-        DateFormat dtfIn = new SimpleDateFormat("YYYYMMddHHmm");
-        DateFormat dtfOut = new SimpleDateFormat("dd/MM");
-        Date dateStartRaw = new Date();
-        Date dateLastRaw = new Date();
+        DateTimeFormatter dtfIn = DateTimeFormatter.ofPattern("YYYYMMddHHmm");
+        DateTimeFormatter dtfOut = DateTimeFormatter.ofPattern("dd/MM");
+        LocalDate dateStartRaw;
+        LocalDate dateLastRaw;
 
         for (String fileRaw : fileReader.getFileRawList(folderRaw)) {
             if (fileRaw.contains(cID) && fileRaw.contains(cTimestamp)) {
@@ -618,7 +638,7 @@ public class GUIController implements Initializable {
                 }
             }
             cInitial = capacitances.get(0);
-
+            cLast = capacitances.get(capacitances.size() - 1);
             if (!file) {
                 int sum = 0;
                 for (Integer capacitance : capacitances) {
@@ -633,12 +653,12 @@ public class GUIController implements Initializable {
             Cmin = capacitances.get(0);
             Cmax = capacitances.get(capacitances.size() - 1);
 
-            try {
-                dateStartRaw = dtfIn.parse(dates.get(0));
-                dateLastRaw = dtfIn.parse(dates.get(dates.size() - 1));
-            } catch (ParseException ex) {
-                System.out.println("Parsing dates broke!");
-            }
+            dateStartRaw = (LocalDate) dtfIn.parse(dates.get(0));
+            dateStart = dtfOut.format(dateStartRaw);
+            dateLastRaw = (LocalDate) dtfIn.parse(dates.get(dates.size() - 1));
+            dateLast = dtfOut.format(dateLastRaw);
+            days = ChronoUnit.DAYS.between(dateStartRaw, dateLastRaw);
+
         } catch (FileNotFoundException ex) {
             System.out.println("Something wrong with file or parsing while making dataCard!");
         }
@@ -666,23 +686,26 @@ public class GUIController implements Initializable {
         }
 
         if (Cmin != 0) { // 'cause if one is set, all are.
-            Qmin = 0.5 * Cmin * cVoltage;
-            Qmiddle = 0.5 * Cmiddle * cVoltage;
-            Qmax = 0.5 * Cmax * cVoltage;
+            Qmin = (int) (Cmin * cVoltage);
+            Qmiddle = (int) (Cmiddle * cVoltage);
+            Qmax = (int) (Cmax * cVoltage);
 
-            Emin = 0.5 * Cmin * cVoltage;
-            Emiddle = 0.5 * Cmiddle * cVoltage;
-            Emax = 0.5 * Cmax * cVoltage;
+            Emin = (int) (0.5 * Qmin * cVoltage);
+            Emiddle = (int) (0.5 * Qmiddle * cVoltage);
+            Emax = (int) (0.5 * Qmax * cVoltage);
         }
 
         VBox dataCard = new VBox();
+        dataCard.setId(cID + cTimestamp);
         dataCard.setPrefSize(vBoxWidth, 2000);
         dataCard.setMinWidth(vBoxWidth);
         dataCard.setMaxWidth(vBoxWidth);
+        dataCard.setStyle("-fx-background-color: #F5F5F5;");
+        dataCard.setAlignment(Pos.CENTER);
 
         Label title = new Label(cID);
         if (file) {
-            title.setText(cID + " | " + cTimestamp);
+//            title.setText(cID + " | " + dtfOut.format(dtfIn.parse(cTimestamp)));
         }
         title.setMinSize(vBoxWidth, titleHeight);
         title.setMaxSize(vBoxWidth, titleHeight);
@@ -694,52 +717,135 @@ public class GUIController implements Initializable {
         DoughnutChart doughnutNominal = new DoughnutChart(doughnutNominalData);
         DoughnutChart doughnutInitial = new DoughnutChart(doughnutInitialData);
 
-//        PieChart.Data doughnutNominalChartData = new PieChart.Data("% of nominal", percentNominal);
-//        PieChart.Data doughnutInitialChartData = new PieChart.Data("% of initial", percentInitial);
+        if (file) {
+            percentNominal = cMeasured;
+            percentInitial = cMeasured;
+        } else {
+            percentNominal = cLast;
+            percentInitial = cLast;
+        }
+
+        doughnutNominalData.addAll(new PieChart.Data("% of nominal", percentNominal), new PieChart.Data("", cNominal - percentNominal));
+        doughnutNominalData.addAll(new PieChart.Data("% of initial", percentInitial), new PieChart.Data("", cInitial - percentInitial));
 
         VBox cellCapacitance = createDataCell("C[F]", Cmin, Cmiddle, Cmax);
         VBox cellQ = createDataCell("Q[J]", Qmin, Qmiddle, Qmax);
         VBox cellEnergy = createDataCell("E[J]", Emin, Emiddle, Emax);
 
-        dataCard.getChildren().addAll(title, doughnutNominal, doughnutInitial, cellCapacitance);
+        dataCard.getChildren().addAll(title, cellCapacitance);  //doughnutNominal, doughnutInitial,
 
         if (file) {
             VBox cellCurrent = createDataCell("I[mA]", Imin, Imiddle, Imax);
             dataCard.getChildren().addAll(cellCurrent);
         }
 
-        dataCard.getChildren().addAll(cellQ, cellEnergy);
+        VBox cellDates = createDatesCell("Dates", dateStart, days, dateLast);
+
+        dataCard.getChildren().addAll(cellQ, cellEnergy, cellDates);
+
+        Region spacer = new Region();
+
+        dataCard.getChildren().add(spacer);
+
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        dataCard.setEffect(dropShadow);
+
         return dataCard;
     }
 
-    public VBox createDataCell(String title, double leftValue, double middleValue, double rightValue) {
+    public VBox createDataCell(String title, int leftValue, int middleValue, int rightValue) {
         VBox dataCell = new VBox();
-        dataCell.setMaxSize(90, 70);
-        dataCell.setMinSize(90, 70);
+        dataCell.setMaxSize(90, 45);
+        dataCell.setAlignment(Pos.CENTER);
 
+        VBox titleVBox = new VBox();
         Label cellTitle = new Label(title);
         cellTitle.setAlignment(Pos.CENTER);
-        cellTitle.setMaxHeight(20);
-        cellTitle.setMinHeight(20);
+        cellTitle.setMaxHeight(19);
+        cellTitle.setMinHeight(19);
+        titleVBox.setAlignment(Pos.CENTER);
+        titleVBox.getChildren().add(cellTitle);
+        titleVBox.setStyle("-fx-background-color: #F5F5F5;");
+        titleVBox.setEffect(dropShadow);
 
         HBox values = new HBox();
+        values.setAlignment(Pos.CENTER);
 
         String leftString = String.valueOf(leftValue);
         String middleString = String.valueOf(middleValue);
         String rightString = String.valueOf(rightValue);
 
+        Label leftPad = new Label();
+        leftPad.setMinWidth(3);
+
         Label left = new Label(leftString);
+        left.setMinWidth(26);
         left.setAlignment(Pos.CENTER);
+
         Label middle = new Label(middleString);
+        middle.setMinWidth(26);
         middle.setAlignment(Pos.CENTER);
+
         Label right = new Label(rightString);
+        right.setMinWidth(26);
         right.setAlignment(Pos.CENTER);
 
-        values.getChildren().addAll(left, middle, right);
+        Label rightPad = new Label();
+        rightPad.setMinWidth(3);
 
-        dataCell.getChildren().addAll(cellTitle, values);
+        values.setMaxHeight(23);
+        values.setMinHeight(23);
+        values.getChildren().addAll(leftPad, left, middle, right, rightPad);
+        dataCell.getChildren().addAll(titleVBox, values);
 
         return dataCell;
+    }
+
+    public VBox createDatesCell(String title, String dateStart, long days, String dateLast) {
+        VBox datesCell = new VBox();
+        datesCell.setMaxSize(90, 45);
+        datesCell.setAlignment(Pos.CENTER);
+
+        VBox titleVBox = new VBox();
+        Label cellTitle = new Label(title);
+        cellTitle.setAlignment(Pos.CENTER);
+        cellTitle.setMaxHeight(19);
+        cellTitle.setMinHeight(19);
+        titleVBox.setAlignment(Pos.CENTER);
+        titleVBox.getChildren().add(cellTitle);
+        titleVBox.setStyle("-fx-background-color: #F5F5F5;");
+        titleVBox.setEffect(dropShadow);
+
+        HBox values = new HBox();
+        values.setAlignment(Pos.CENTER);
+
+        String middleString = String.valueOf(days);
+
+        Label leftPad = new Label();
+        leftPad.setMinWidth(3);
+
+        Label left = new Label(dateStart);
+        left.setMinWidth(26);
+        left.setAlignment(Pos.CENTER);
+
+        Label middle = new Label(middleString);
+        middle.setMinWidth(26);
+        middle.setAlignment(Pos.CENTER);
+
+        Label right = new Label(dateLast);
+        right.setMinWidth(26);
+        right.setAlignment(Pos.CENTER);
+
+        Label rightPad = new Label();
+        rightPad.setMinWidth(3);
+
+        values.setMaxHeight(23);
+        values.setMinHeight(23);
+        values.getChildren().addAll(leftPad, left, middle, right, rightPad);
+        datesCell.getChildren().addAll(titleVBox, values);
+
+        return datesCell;
     }
 
     @Override
@@ -788,12 +894,9 @@ public class GUIController implements Initializable {
         graphStats.setLegendVisible(false);
         graphStats.getData().addAll(stats);
 
-//        graphStatsDates.setCreateSymbols(false);
-//        graphStatsDates.setAnimated(false);
-//        graphStatsDates.getXAxis().setLabel("Number of cycles");
-//        graphStatsDates.getYAxis().setLabel("C [F]");
-//        graphStats.setLegendVisible(false);
-//        graphStatsDates.getData().addAll(statsDates);        
+        dropShadow.setRadius(10);
+        dropShadow.setColor(Color.color(0, 0, 0, 0.3));
+
     }
 
 }
