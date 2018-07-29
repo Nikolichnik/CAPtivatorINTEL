@@ -178,7 +178,7 @@
                                                     <NumberAxis side="LEFT" />
                                                 </yAxis>
                                             </LineChart>
-                                    <BarChart fx:id="graphStatsCapacities" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
+                                    <BarChart fx:id="graphCapacities" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
                                       <xAxis>
                                         <CategoryAxis side="BOTTOM" />
                                       </xAxis>
@@ -197,7 +197,7 @@
                            <children>
                                       <HBox fx:id="toolsStats" alignment="CENTER_LEFT" maxHeight="-Infinity" onMouseDragged="#resize" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
                                           <children>
-                                    <JFXComboBox fx:id="selectStatsDrop" editable="true" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMousePressed="#handleSelectStatsDrop" prefHeight="25.0" prefWidth="113.0" promptText="Select capacitor...">
+                                    <JFXComboBox fx:id="selectStatsDrop" editable="true" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseEntered="#handleSelectStatsDropClick" onMousePressed="#handleSelectStatsDropClick" prefHeight="25.0" prefWidth="113.0" promptText="Select capacitor...">
                                        <HBox.margin>
                                           <Insets bottom="3.0" left="9.0" right="3.0" top="3.0" />
                                        </HBox.margin>

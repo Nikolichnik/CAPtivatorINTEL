@@ -12,6 +12,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -37,8 +39,11 @@ import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
+import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
@@ -61,6 +66,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 public class GUIController implements Initializable {
@@ -77,18 +83,14 @@ public class GUIController implements Initializable {
     private final XYChart.Series voltageData = new XYChart.Series();
     private final XYChart.Series currentData = new XYChart.Series();
 
-    private final XYChart.Series stats = new XYChart.Series();
-    private final XYChart.Series statsDates = new XYChart.Series();
+    private final XYChart.Series statsAverageCapacities = new XYChart.Series();
+    private final XYChart.Series statsLastCapacities = new XYChart.Series();
 
-    private int voltage = 0, current = 0, seconds = 0;
+    private int voltage = 0, current = 0, seconds = 0, cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0;
 
     private Task task;
 
-    private int cycle = 0;
-    private int cycleAll = 0;
-    private Double measuredCapacity = -1.0;
-
-    private double xOffset, yOffset, cVoltage = 2.7;
+    private double xOffset, yOffset, nominalVoltage = 2.7;
 
     private boolean confirm = true;
 
@@ -98,17 +100,18 @@ public class GUIController implements Initializable {
     private LineChart<?, ?> graphSerial, graphFile, graphStats;
 
     @FXML
-    private BarChart graphStatsCapacities;
+    private BarChart graphCapacities;
 
     @FXML
-    private JFXComboBox<String> selectPortDrop, selectCapacitorDrop, selectSessionDrop;
-    ObservableList<String> selectPortDropItems, selectCapacitorDropItems, selectSessionDropItems;
+    private JFXComboBox<String> selectPortDrop, selectCapacitorDrop, selectSessionDrop, selectStatsDrop;
+    ObservableList<String> selectPortDropItems, selectCapacitorDropItems, selectSessionDropItems, selectStatsDropItems;
 
     @FXML
     private JFXButton minimiseButton, maximiseButton, closeButton,
             startMeasurementButton, pauseMeasurementButton, connectButton,
             serialReadButton, fileReadButton, statsReadButton,
-            addFileButton, removeFileButton, removeAllFilesButton;
+            addFileButton, removeFileButton, removeAllFilesButton,
+            addStatsButton, clearStatsButton, clearAllStatsButton;
 
     @FXML
     private TextField capacitorIDTextBox;
@@ -125,11 +128,17 @@ public class GUIController implements Initializable {
     }
 
     public void handleMaximiseButton() {
+        Screen screen = Screen.getPrimary();
+        Rectangle2D bounds = screen.getVisualBounds();
         Stage stage = (Stage) maximiseButton.getScene().getWindow();
         if (stage.isMaximized()) {
             stage.setMaximized(false);
         } else {
             stage.setMaximized(true);
+            stage.setX(bounds.getMinX());                                       // Workaround for undecorated maximise property to stop it from going fullscreen.
+            stage.setY(bounds.getMinY());
+            stage.setHeight(bounds.getHeight());
+            stage.setWidth(bounds.getWidth());
         }
     }
 
@@ -193,12 +202,43 @@ public class GUIController implements Initializable {
             serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: transparent;"));
             fileReadButton.setOnMouseExited(e -> fileReadButton.setStyle("-fx-background-color: transparent;"));
             statsReadButton.setOnMouseExited(e -> statsReadButton.setStyle("-fx-background-color: #5A2728;"));
+
+            statsAverageCapacities.getData().clear();
+            statsLastCapacities.getData().clear();
+
+            for (String file : fileReader.getFileRawList(folderData)) {
+                if (!file.contains("raw")) {
+                    try (Scanner scanner = new Scanner(new File("data/" + file));) {
+                        String lastLine = "";
+                        int count = 0;
+                        int Cmiddle = 0;
+                        int Clast = 0;
+                        while (scanner.hasNextLine()) {
+                            lastLine = scanner.nextLine();
+                            if (!lastLine.contains("#")) {
+                                count++;
+                                Cmiddle += Integer.parseInt(lastLine.substring(lastLine.lastIndexOf(",") + 1));
+                            }
+                        }
+                        Clast = Integer.parseInt(lastLine.substring(lastLine.lastIndexOf(",") + 1));
+                        Cmiddle /= count;
+
+                        String capName = file.substring(0, file.indexOf("_"));
+
+                        statsAverageCapacities.getData().add(new XYChart.Data(capName, Cmiddle));
+                        statsLastCapacities.getData().add(new XYChart.Data(capName, Clast));
+
+                    } catch (Exception ex) {
+                        System.out.println("Capacitor statistic could not be generated!");
+                    }
+                }
+            }
         }
     }
 
     public void handleConnectClick() {
 
-        String fileNameAll = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";   // Possibly move out of thread
+        String fileNameAll = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
         try {
             fileWriterAll = new FileWriter(fileNameAll, true);
         } catch (Exception ex) {
@@ -242,26 +282,38 @@ public class GUIController implements Initializable {
                     confirm = true;
                 }
             } else if (virgin) {                                                // If new capacitor iD
-                System.out.println("Entered new ID");
                 LocalDateTime timestamp = LocalDateTime.now();
                 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
-                TextInputDialog dialog = new TextInputDialog();
+                TextInputDialog dialog = new TextInputDialog("capacity,voltage");
                 dialog.setTitle("Initial setup");
                 dialog.setHeaderText("New capacitor ID detected!");
-                dialog.setContentText("Please enter nominal capacity:");
+                dialog.setContentText("Please set up new capacitor:");
+//                dialog
                 Optional<String> result = dialog.showAndWait();
 
-                double nominalCapacity = 0.0;
+                int nominalCapacity = 0;
 
                 if (result.isPresent()) {
-                    nominalCapacity = Double.parseDouble(result.get());
+                    nominalCapacity = Integer.parseInt(result.get().substring(0, result.get().indexOf(",")));
+                    nominalVoltage = Double.parseDouble(result.get().substring(result.get().indexOf(",") + 1));
                 }
                 try {
-                    fileWriterAll.append("#," + dtf.format(timestamp) + "," + nominalCapacity + "\r\n");
+                    fileWriterAll.append("#," + nominalVoltage + "," + nominalCapacity + "\r\n");    //dtf.format(timestamp) change to nominalVoltage
                     fileWriterAll.flush();
                 } catch (IOException ex) {
                     System.out.println("Initial value NOT set!");
+                }
+            } else {
+                try (Scanner scanner = new Scanner(new File(fileNameAll));) {
+                    while (scanner.hasNextLine()) {
+                        String line = scanner.nextLine();
+                        if (line.contains("#")) {
+                            nominalVoltage = Double.parseDouble(line.substring(line.indexOf(",") + 1, line.lastIndexOf(",")));
+                        }
+                    }
+                } catch (FileNotFoundException ex) {
+                    System.out.println("Setup file not found!");
                 }
             }
 
@@ -284,6 +336,12 @@ public class GUIController implements Initializable {
                         confirm = true;
 
                         try (Scanner scanner = new Scanner(chosenPort.getInputStream())) {
+
+                            OutputStream outputStream = chosenPort.getOutputStream();           // Communicate nominalVoltage to CAPtivatorGYM
+                            PrintStream serialWriter = new PrintStream(outputStream);
+                            serialWriter.println("V" + String.valueOf(nominalVoltage));
+                            serialWriter.flush();
+
                             List<Integer> linijaPodataka;
                             while (scanner.hasNextLine() && confirm && !isCancelled()) {
                                 try {
@@ -317,7 +375,7 @@ public class GUIController implements Initializable {
                                         System.out.println(lastLine);
                                         in.close();
                                         cycleAll = Integer.parseInt(lastLine);
-                                        measuredCapacity = Double.parseDouble(line.substring(line.indexOf("=") + 2));
+                                        measuredCapacity = Integer.parseInt(line.substring(line.indexOf("=") + 2));
                                         if (line.contains("Discharge cycle")) {
                                             cycleAll++;
                                         }
@@ -528,13 +586,8 @@ public class GUIController implements Initializable {
                                 current = linijaPodataka.get(1);
                                 seconds = linijaPodataka.get(2);
                                 linijaPodataka.clear();
-                                Platform.runLater(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        voltageDataFile.getData().add(new XYChart.Data(seconds, voltage));
-                                        currentDataFile.getData().add(new XYChart.Data(seconds, current));
-                                    }
-                                });
+                                voltageDataFile.getData().add(new XYChart.Data(seconds, voltage));
+                                currentDataFile.getData().add(new XYChart.Data(seconds, current));
                             } catch (Exception ex) {
                                 System.out.println("Something is wrong with parsing!");
                             }
@@ -546,7 +599,6 @@ public class GUIController implements Initializable {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            System.out.println(sessionID);
                             graphFile.getData().addAll(voltageDataFile, currentDataFile);
                             fileCardsStack.getChildren().add(createDataCard(selectCapacitorDrop.getValue(), sessionID, true));
                         }
@@ -571,9 +623,16 @@ public class GUIController implements Initializable {
             @Override
             public void run() {
                 graphFile.getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));
-                fileCardsStack.getChildren().stream().filter((card) -> (card.getId() == null ? false : card.getId().contains(selectCapacitorDrop.getValue()))).forEachOrdered((card) -> {
-                    fileCardsStack.getChildren().remove(card);
-                });
+                int size = fileCardsStack.getChildren().size();
+                for (int i = 0; i < size; i++) {
+                    if (fileCardsStack.getChildren().get(i).getId().contains(selectCapacitorDrop.getValue())) {
+                        fileCardsStack.getChildren().remove(fileCardsStack.getChildren().get(i));
+                        size = fileCardsStack.getChildren().size();
+                    }
+                }
+//                fileCardsStack.getChildren().stream().filter((card) -> (card.getId() == null ? false : card.getId().contains(selectCapacitorDrop.getValue()))).forEachOrdered((card) -> {
+//                    fileCardsStack.getChildren().remove(card);
+//                });
             }
         });
     }
@@ -588,12 +647,83 @@ public class GUIController implements Initializable {
         });
     }
 
-    public void handleSelectStatsDrop() {
-
+    public void handleSelectStatsDropClick() {
+        final List<String> files = new LinkedList(fileReader.getFileRawList(folderData));
+        if (files.size() - 1 != selectStatsDrop.getItems().size()) {            // to exclude folder "raw"
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            selectStatsDropItems.clear();
+                            for (String file : files) {
+                                if (!file.contains("raw")) // to exclude folder "raw"
+                                {
+                                    selectStatsDropItems.add(file.substring(0, file.indexOf("_")));
+                                }
+                            }
+                            selectStatsDrop.getItems().addAll(selectStatsDropItems);
+                        }
+                    });
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        }
     }
 
     public void handleAddStatsButtonClick() {
-
+        if (selectStatsDrop.getValue() != null) {
+            task = new Task<Void>() {
+                @Override
+                public Void call() {
+                    String address = "data/";
+                    for (String file : fileReader.getFileRawList(folderData)) {
+                        if (file.contains(selectStatsDrop.getValue())) {
+                            address += file;
+                        }
+                    }
+                    XYChart.Series capacitanceStats = new XYChart.Series();
+                    capacitanceStats.setName(selectStatsDrop.getValue());
+                    try (Scanner scanner = new Scanner(new File(address));) {
+                        while (scanner.hasNextLine() && !isCancelled()) {
+                            try {
+                                String line = scanner.nextLine();
+                                if (!line.contains("#")) {
+                                    cycle = Integer.parseInt(line.substring(0, line.indexOf(",")));
+                                    measuredCapacity = Integer.parseInt(line.substring(line.lastIndexOf(",") + 1));
+                                    capacitanceStats.getData().add(new XYChart.Data(cycle, measuredCapacity));
+                                }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    } catch (Exception ex) {
+                        System.out.println("File not found!");
+                    }
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            graphStats.getData().addAll(capacitanceStats);
+                            dataCardsStack.getChildren().add(createDataCard(selectStatsDrop.getValue(), "", false));
+                        }
+                    });
+                    return null;
+                }
+            };
+            Thread th = new Thread(task);
+            th.setDaemon(true);
+            th.start();
+        } else {
+            Alert alert = new Alert(AlertType.WARNING);
+            alert.setTitle("Warning!");
+            alert.setHeaderText("Capacitor not selected!");
+            alert.setContentText("Please select capacitor in order to continue.");
+            alert.showAndWait();
+        }
     }
 
     public void handleClearStatsButtonClick() {
@@ -605,10 +735,11 @@ public class GUIController implements Initializable {
     }
 
     public VBox createDataCard(String cID, String cTimestamp, boolean file) {
-        int cNominal = 0, cInitial = 0, cLast = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 29;
+        int cNominal = 0, cInitial = 0, cLast = 0, cMeasured = 0, vBoxWidth = 90, titleHeight = 29;
         int Cmin = 0, Cmiddle = 0, Cmax = 0, Imin = 0, Imiddle = 0, Imax = 0;
         int Qmin = 0, Qmiddle = 0, Qmax = 0, Emin = 0, Emiddle = 0, Emax = 0;
         long days = 0;
+        double nominalVoltageLocal = 2.7;
 
         String addressData = "data/" + cID + "_all.txt";
         String addressRaw = "data/raw/";
@@ -632,11 +763,9 @@ public class GUIController implements Initializable {
                 String line = scanner.nextLine();
                 if (line.contains("#")) {
                     cNominal = Integer.parseInt(line.substring(line.lastIndexOf(",") + 1, line.length()));
-                    System.out.println(cNominal);
+                    nominalVoltageLocal = Double.parseDouble(line.substring(line.indexOf(",") + 1, line.lastIndexOf(",")));
                 } else {
-                    System.out.println(Integer.parseInt(line.substring(line.lastIndexOf(",") + 1, line.length())));
                     capacitances.add(Integer.parseInt(line.substring(line.lastIndexOf(",") + 1, line.length())));
-                    System.out.println(Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> (String) token).collect(Collectors.toList()).get(1));
                     dates.add(Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> (String) token).collect(Collectors.toList()).get(1));
                 }
                 if (line.contains(cTimestamp)) {
@@ -659,6 +788,7 @@ public class GUIController implements Initializable {
             } else {
                 Cmiddle = cMeasured;
             }
+
             Collections.sort(capacitances);
 
             Cmin = capacitances.get(0);
@@ -696,17 +826,17 @@ public class GUIController implements Initializable {
         }
 
         if (Cmin != 0) { // 'cause if one is set, all are.
-            Qmin = (int) (Cmin * cVoltage);
-            Qmiddle = (int) (Cmiddle * cVoltage);
-            Qmax = (int) (Cmax * cVoltage);
+            Qmin = (int) (Cmin * nominalVoltage);
+            Qmiddle = (int) (Cmiddle * nominalVoltage);
+            Qmax = (int) (Cmax * nominalVoltage);
 
-            Emin = (int) (0.5 * Qmin * cVoltage);
-            Emiddle = (int) (0.5 * Qmiddle * cVoltage);
-            Emax = (int) (0.5 * Qmax * cVoltage);
+            Emin = (int) (0.5 * Qmin * nominalVoltage);
+            Emiddle = (int) (0.5 * Qmiddle * nominalVoltage);
+            Emax = (int) (0.5 * Qmax * nominalVoltage);
         }
 
         VBox dataCard = new VBox();
-        dataCard.setId(cID + cTimestamp);
+        dataCard.setId(cID);
         dataCard.setMinWidth(vBoxWidth);
         dataCard.setMaxWidth(vBoxWidth);
         dataCard.setMinHeight(300);
@@ -722,23 +852,16 @@ public class GUIController implements Initializable {
         title.setAlignment(Pos.CENTER);
         title.setPadding(new Insets(9, 0, 5, 0));
 
-        if (file) {
-            percentNominal = cMeasured;
-            percentInitial = cMeasured;
-        } else {
-            percentNominal = cLast;
-            percentInitial = cLast;
-        }
-
+        VBox nominal = createDatesCell("Nominal", cID, cNominal, String.valueOf(nominalVoltageLocal) + "V");
         VBox cellCapacitance = createDataCell("C [F]", Cmin, Cmiddle, Cmax);
         VBox cellQ = createDataCell("Q [J]", Qmin, Qmiddle, Qmax);
         VBox cellEnergy = createDataCell("E [J]", Emin, Emiddle, Emax);
-        
+
         Pane bumper = new Pane();
         bumper.setMinSize(30, 9);
         bumper.setMaxSize(30, 9);
 
-        dataCard.getChildren().addAll(title, makeDoughnut(cMeasured, 333), makeDoughnut(cLast, 333), bumper, cellCapacitance);  //doughnutNominal, doughnutInitial,
+        dataCard.getChildren().addAll(title, makeDoughnut(Cmiddle, cNominal, false), makeDoughnut(Cmiddle, cInitial, true), bumper, nominal, cellCapacitance);  //doughnutNominal, doughnutInitial,
 
         if (file) {
             VBox cellCurrent = createDataCell("I [mA]", Imin, Imiddle, Imax);
@@ -758,18 +881,33 @@ public class GUIController implements Initializable {
         return dataCard;
     }
 
-    public StackPane makeDoughnut(int value, int total) {
+    public StackPane makeDoughnut(int value, int total, boolean percentOption) {
         StackPane doughnut = new StackPane();
+
+        int percent = 0;
+        Text text;
+
+        if (percentOption) {
+            if (total != 0) {
+                percent = value * 100 / total;
+                text = new Text(String.valueOf(percent) + "%");
+            } else {
+                text = new Text("N/A");
+            }
+        } else {
+            if (value != 0) {
+                text = new Text(String.valueOf(value));
+            } else {
+                text = new Text("N/A");
+            }
+        }
 
         ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList(new PieChart.Data("", value), new PieChart.Data("", total - value));
         PieChart pie = new PieChart(pieData);
         pie.setLabelsVisible(false);
         pie.setStartAngle(90);
         pie.setEffect(dropShadow);
-//        pie.setScaleX(0.65);
-//        pie.setScaleY(0.65);
-        
-        Text text = new Text(String.valueOf(value));
+
         text.setFont(new Font(23));
         text.setEffect(dropShadow);
 
@@ -789,10 +927,11 @@ public class GUIController implements Initializable {
         return doughnut;
     }
 
-    public VBox createDataCell(String title, double leftValue, double middleValue, double rightValue) {
+    public VBox createDataCell(String title, int leftValue, int middleValue, int rightValue) {
         VBox dataCell = new VBox();
         dataCell.setMaxSize(90, 45);
         dataCell.setAlignment(Pos.CENTER);
+        dataCell.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
 
         VBox titleVBox = new VBox();
         Label cellTitle = new Label(title);
@@ -807,9 +946,9 @@ public class GUIController implements Initializable {
         HBox values = new HBox();
         values.setAlignment(Pos.CENTER);
 
-        String leftString = String.valueOf((int) leftValue);
-        String middleString = String.valueOf((int) middleValue);
-        String rightString = String.valueOf((int) rightValue);
+        String leftString = String.valueOf(leftValue);
+        String middleString = String.valueOf(middleValue);
+        String rightString = String.valueOf(rightValue);
 
         Label leftPad = new Label();
         leftPad.setMinWidth(1);
@@ -847,6 +986,7 @@ public class GUIController implements Initializable {
         VBox datesCell = new VBox();
         datesCell.setMaxSize(90, 45);
         datesCell.setAlignment(Pos.CENTER);
+        datesCell.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
 
         VBox titleVBox = new VBox();
         Label cellTitle = new Label(title);
@@ -905,10 +1045,13 @@ public class GUIController implements Initializable {
         selectPortDropItems = comms.getPortList();
         selectPortDrop.getItems().addAll(selectPortDropItems);
 
-        selectCapacitorDropItems = FXCollections.observableArrayList();
-        handleSelectCapacitorDropClick();
+        selectStatsDropItems = FXCollections.observableArrayList();
+        handleSelectStatsDropClick();
 
         selectSessionDropItems = FXCollections.observableArrayList();
+
+        selectCapacitorDropItems = FXCollections.observableArrayList();
+        handleSelectCapacitorDropClick();
 
         graphSerial.setCreateSymbols(false);
         graphSerial.setAnimated(false);
@@ -929,15 +1072,20 @@ public class GUIController implements Initializable {
         graphFile.getXAxis().setLabel("t [s]");
         graphFile.getYAxis().setLabel("I/U [mA/mV]");
         graphFile.setLegendSide(Side.BOTTOM);
-//        voltageDataFile.setName("Voltage");
-//        currentDataFile.setName("Current");
 
         graphStats.setCreateSymbols(false);
         graphStats.setAnimated(false);
         graphStats.getXAxis().setLabel("Number of cycles");
         graphStats.getYAxis().setLabel("C [F]");
-        graphStats.setLegendVisible(false);
-        graphStats.getData().addAll(stats);
+        graphStats.setLegendSide(Side.BOTTOM);
+
+        graphCapacities.setAnimated(false);
+        graphCapacities.getXAxis().setLabel("Capacitors");
+        graphCapacities.getYAxis().setLabel("C [F]");
+        graphCapacities.setLegendVisible(false);
+        graphCapacities.setCategoryGap(13);
+        graphCapacities.setBarGap(5);
+        graphCapacities.getData().addAll(statsAverageCapacities, statsLastCapacities);
 
         dropShadow.setRadius(10);
         dropShadow.setColor(Color.color(0, 0, 0, 0.2));
