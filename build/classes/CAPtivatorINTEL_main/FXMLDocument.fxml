@@ -5,6 +5,8 @@
 <?import com.jfoenix.controls.JFXTextField?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.Cursor?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.effect.BoxBlur?>
@@ -165,18 +167,10 @@
                             <children>
                         <HBox fx:id="dataCardsGraphsStack" nodeOrientation="RIGHT_TO_LEFT" VBox.vgrow="ALWAYS">
                            <children>
-                              <HBox fx:id="dataCardsStack" nodeOrientation="RIGHT_TO_LEFT">
-                                 <children>
-                                    <VBox maxWidth="-Infinity" minWidth="-Infinity" prefWidth="90.0" style="-fx-background-color: #F5F5F5;">
-                                       <effect>
-                                          <DropShadow color="#0000004d" />
-                                       </effect>
-                                    </VBox>
-                                 </children>
-                              </HBox>
+                              <HBox fx:id="dataCardsStack" nodeOrientation="RIGHT_TO_LEFT" />
                               <VBox fx:id="dataGraphsStack" HBox.hgrow="ALWAYS">
                                  <children>
-                                            <LineChart fx:id="graphStats" nodeOrientation="LEFT_TO_RIGHT" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;">
+                                            <LineChart fx:id="graphStats" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
                                                 <xAxis>
                                                     <NumberAxis side="BOTTOM" />
                                                 </xAxis>
@@ -184,14 +178,14 @@
                                                     <NumberAxis side="LEFT" />
                                                 </yAxis>
                                             </LineChart>
-                                    <LineChart fx:id="graphStatsDates" layoutX="10.0" layoutY="10.0" nodeOrientation="LEFT_TO_RIGHT" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;">
-                                       <xAxis>
-                                          <NumberAxis side="BOTTOM" tickLength="3.0" />
-                                       </xAxis>
-                                       <yAxis>
-                                          <NumberAxis side="LEFT" />
-                                       </yAxis>
-                                    </LineChart>
+                                    <BarChart fx:id="graphStatsCapacities" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
+                                      <xAxis>
+                                        <CategoryAxis side="BOTTOM" />
+                                      </xAxis>
+                                      <yAxis>
+                                        <NumberAxis side="LEFT" />
+                                      </yAxis>
+                                    </BarChart>
                                  </children>
                                  <effect>
                                     <DropShadow color="#0000004d" />

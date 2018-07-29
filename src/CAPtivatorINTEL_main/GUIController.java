@@ -18,7 +18,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -29,8 +28,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -42,12 +39,10 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
-import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.chart.XYChart.Data;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -55,17 +50,18 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.effect.Effect;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import javax.swing.border.EmptyBorder;
 
 public class GUIController implements Initializable {
 
@@ -83,7 +79,7 @@ public class GUIController implements Initializable {
 
     private final XYChart.Series stats = new XYChart.Series();
     private final XYChart.Series statsDates = new XYChart.Series();
-    
+
     private int voltage = 0, current = 0, seconds = 0;
 
     private Task task;
@@ -100,7 +96,7 @@ public class GUIController implements Initializable {
 
     @FXML
     private LineChart<?, ?> graphSerial, graphFile, graphStats;
-    
+
     @FXML
     private BarChart graphStatsCapacities;
 
@@ -609,7 +605,7 @@ public class GUIController implements Initializable {
     }
 
     public VBox createDataCard(String cID, String cTimestamp, boolean file) {
-        int cNominal = 0, cInitial = 0, cLast = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 21;
+        int cNominal = 0, cInitial = 0, cLast = 0, cMeasured = 0, percentNominal = 0, percentInitial = 0, vBoxWidth = 90, titleHeight = 29;
         int Cmin = 0, Cmiddle = 0, Cmax = 0, Imin = 0, Imiddle = 0, Imax = 0;
         int Qmin = 0, Qmiddle = 0, Qmax = 0, Emin = 0, Emiddle = 0, Emax = 0;
         long days = 0;
@@ -620,6 +616,7 @@ public class GUIController implements Initializable {
         String dateStart = "N/A", dateLast = "N/A";
 
         DateTimeFormatter dtfIn = DateTimeFormatter.ofPattern("uuuuMMddHHmm");
+        DateTimeFormatter dtfTimestamp = DateTimeFormatter.ofPattern("MMddHHmm");
         DateTimeFormatter dtfOut = DateTimeFormatter.ofPattern("dd/MM");
 
         for (String fileRaw : fileReader.getFileRawList(folderRaw)) {
@@ -710,25 +707,20 @@ public class GUIController implements Initializable {
 
         VBox dataCard = new VBox();
         dataCard.setId(cID + cTimestamp);
-        dataCard.setPrefSize(vBoxWidth, 2000);
         dataCard.setMinWidth(vBoxWidth);
         dataCard.setMaxWidth(vBoxWidth);
+        dataCard.setMinHeight(300);
         dataCard.setStyle("-fx-background-color: #F5F5F5;");
         dataCard.setAlignment(Pos.CENTER);
 
         Label title = new Label(cID);
         if (file) {
-//            title.setText(cID + " | " + dtfOut.format(dtfIn.parse(cTimestamp)));
+            title.setText(cID + " | " + cTimestamp.substring(0, 2) + "/" + cTimestamp.substring(2, 4));
         }
         title.setMinSize(vBoxWidth, titleHeight);
         title.setMaxSize(vBoxWidth, titleHeight);
         title.setAlignment(Pos.CENTER);
-
-        ObservableList<PieChart.Data> doughnutNominalData = FXCollections.observableArrayList();
-        ObservableList<PieChart.Data> doughnutInitialData = FXCollections.observableArrayList();
-
-        DoughnutChart doughnutNominal = new DoughnutChart(doughnutNominalData);
-        DoughnutChart doughnutInitial = new DoughnutChart(doughnutInitialData);
+        title.setPadding(new Insets(9, 0, 5, 0));
 
         if (file) {
             percentNominal = cMeasured;
@@ -738,17 +730,18 @@ public class GUIController implements Initializable {
             percentInitial = cLast;
         }
 
-        doughnutNominalData.addAll(new PieChart.Data("% of nominal", percentNominal), new PieChart.Data("", cNominal - percentNominal));
-        doughnutNominalData.addAll(new PieChart.Data("% of initial", percentInitial), new PieChart.Data("", cInitial - percentInitial));
+        VBox cellCapacitance = createDataCell("C [F]", Cmin, Cmiddle, Cmax);
+        VBox cellQ = createDataCell("Q [J]", Qmin, Qmiddle, Qmax);
+        VBox cellEnergy = createDataCell("E [J]", Emin, Emiddle, Emax);
+        
+        Pane bumper = new Pane();
+        bumper.setMinSize(30, 9);
+        bumper.setMaxSize(30, 9);
 
-        VBox cellCapacitance = createDataCell("C[F]", Cmin, Cmiddle, Cmax);
-        VBox cellQ = createDataCell("Q[J]", Qmin, Qmiddle, Qmax);
-        VBox cellEnergy = createDataCell("E[J]", Emin, Emiddle, Emax);
-
-        dataCard.getChildren().addAll(title, cellCapacitance);  //doughnutNominal, doughnutInitial,
+        dataCard.getChildren().addAll(title, makeDoughnut(cMeasured, 333), makeDoughnut(cLast, 333), bumper, cellCapacitance);  //doughnutNominal, doughnutInitial,
 
         if (file) {
-            VBox cellCurrent = createDataCell("I[mA]", Imin, Imiddle, Imax);
+            VBox cellCurrent = createDataCell("I [mA]", Imin, Imiddle, Imax);
             dataCard.getChildren().addAll(cellCurrent);
         }
 
@@ -757,14 +750,43 @@ public class GUIController implements Initializable {
         dataCard.getChildren().addAll(cellQ, cellEnergy, cellDates);
 
         Region spacer = new Region();
-
-        dataCard.getChildren().add(spacer);
-
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
+        dataCard.getChildren().add(spacer);
         dataCard.setEffect(dropShadow);
 
         return dataCard;
+    }
+
+    public StackPane makeDoughnut(int value, int total) {
+        StackPane doughnut = new StackPane();
+
+        ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList(new PieChart.Data("", value), new PieChart.Data("", total - value));
+        PieChart pie = new PieChart(pieData);
+        pie.setLabelsVisible(false);
+        pie.setStartAngle(90);
+        pie.setEffect(dropShadow);
+//        pie.setScaleX(0.65);
+//        pie.setScaleY(0.65);
+        
+        Text text = new Text(String.valueOf(value));
+        text.setFont(new Font(23));
+        text.setEffect(dropShadow);
+
+        Circle innerCircle = new Circle();
+        innerCircle.setRadius(33);
+        innerCircle.setFill(Color.SNOW);  // do in CSS!
+        innerCircle.setStroke(Color.WHITE);
+        innerCircle.setStrokeWidth(2);
+
+        doughnut.getChildren().addAll(pie, innerCircle, text);
+        doughnut.setAlignment(Pos.CENTER);
+        doughnut.setMaxSize(30, 30);
+        doughnut.setMinSize(90, 90);
+        doughnut.setScaleX(0.65);
+        doughnut.setScaleY(0.65);
+
+        return doughnut;
     }
 
     public VBox createDataCell(String title, double leftValue, double middleValue, double rightValue) {
@@ -802,7 +824,6 @@ public class GUIController implements Initializable {
         Label middle = new Label(middleString);
         middle.setPrefWidth(33);
         middle.setAlignment(Pos.CENTER);
-        
 
         Label right = new Label(rightString);
         right.setFont(new Font(9.0));
