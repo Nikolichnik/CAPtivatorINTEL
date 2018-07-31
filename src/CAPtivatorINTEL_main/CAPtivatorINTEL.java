@@ -24,7 +24,10 @@ public class CAPtivatorINTEL extends Application {
             root = (Parent) FXMLLoader.load(url);
 //            System.out.println("  fxmlResource = " + sceneFile);
             root.getStylesheets().add(getClass().getResource("/CAPtivatorINTEL_main/style.css").toExternalForm());
+            GUIController gui = new GUIController();
+            gui.setStage(stage);
             Scene scene = new Scene(root, 950, 530, Color.TRANSPARENT);
+            gui.setScene(scene);
             stage.setTitle("CAPtivatorINTEL");
             stage.initStyle(TRANSPARENT);
             stage.setScene(scene);

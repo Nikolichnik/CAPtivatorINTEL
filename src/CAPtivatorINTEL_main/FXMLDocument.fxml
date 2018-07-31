@@ -220,7 +220,7 @@
                                     </JFXButton>
                                           </children>
                                       </HBox>
-                              <Pane fx:id="dragPaneStats" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#move" onMousePressed="#movePressed" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
+                              <Pane fx:id="dragPaneStats" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
                                  <cursor>
                                     <Cursor fx:constant="NW_RESIZE" />
                                  </cursor>

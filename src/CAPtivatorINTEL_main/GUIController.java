@@ -5,6 +5,7 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import comms.CommHandler;
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,7 +36,9 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -51,7 +54,9 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.effect.DropShadow;
@@ -68,6 +73,21 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.event.EventHandler;
+import javafx.scene.Scene;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.control.MenuItemBuilder;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.image.WritableImage;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.ContextMenuEvent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javax.imageio.ImageIO;
 
 public class GUIController implements Initializable {
 
@@ -96,6 +116,9 @@ public class GUIController implements Initializable {
 
     DropShadow dropShadow = new DropShadow();
 
+    Stage stage;
+    Scene scene;
+
     @FXML
     private LineChart<?, ?> graphSerial, graphFile, graphStats;
 
@@ -120,7 +143,15 @@ public class GUIController implements Initializable {
     private VBox readStatsVBox, readFileVBox, readFromSerialVBox;
 
     @FXML
-    private HBox fileCardsStack, dataCardsStack;
+    private HBox hBox, fileCardsStack, dataCardsStack;
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
+
+    public void setScene(Scene scene) {
+        this.scene = scene;
+    }
 
     public void handleMinimiseButton() {
         Stage stage = (Stage) minimiseButton.getScene().getWindow();
@@ -842,6 +873,92 @@ public class GUIController implements Initializable {
         dataCard.setMinHeight(300);
         dataCard.setStyle("-fx-background-color: #F5F5F5;");
         dataCard.setAlignment(Pos.CENTER);
+        dataCard.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
+
+        ContextMenu contextMenu = new ContextMenu();
+
+        MenuItem exportImageToClipboardDataCardMenu = new MenuItem("Copy image with data");
+        exportImageToClipboardDataCardMenu.setAccelerator(new KeyCodeCombination(KeyCode.D, KeyCombination.CONTROL_DOWN)); //KeyCombination.keyCombination("Ctrl+D")
+        exportImageToClipboardDataCardMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = dataCard.getParent().getParent().snapshot(new SnapshotParameters(), null);
+                ClipboardContent cc = new ClipboardContent();
+                cc.putImage(image);
+                Clipboard.getSystemClipboard().setContent(cc);
+                System.out.println("Ctrl+D pressed");
+            }
+        });
+
+        MenuItem exportImageToFileDataCardMenu = new MenuItem("Export image with data");
+        exportImageToFileDataCardMenu.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN));
+        exportImageToFileDataCardMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = dataCard.getParent().getParent().snapshot(new SnapshotParameters(), null);
+                FileChooser fileChooser = new FileChooser();
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PNG images (*.png)", "*.png");
+                fileChooser.getExtensionFilters().add(extFilter);
+
+                File file = fileChooser.showSaveDialog(stage);
+
+                if (file != null) {
+                    try {
+                        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+                    } catch (IOException e) {
+                        System.out.println("Image could not be written!");
+                    }
+                }
+            }
+        });
+
+        MenuItem goToFileDataCardMenu = new MenuItem("Open source file");
+        goToFileDataCardMenu.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
+        final String addressOpenRawFile = addressRaw;
+        goToFileDataCardMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                try {
+                    if (file) {
+                        Desktop.getDesktop().open(new File(addressOpenRawFile));
+                    } else {
+                        Desktop.getDesktop().open(new File(addressData));
+                    }
+                } catch (IOException ex) {
+                    System.out.println("File could not be located!");
+                }
+            }
+        });
+
+        MenuItem removeCapacitorMenu = new MenuItem("Remove capacitor " + cID);
+        removeCapacitorMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if (dataCard.getParent().getId().equals("fileCardsStack")) {
+                    String cTimestampID = cTimestamp.substring(2, 4) + "/" + cTimestamp.substring(0, 2) + " | " + cTimestamp.substring(4, 6) + ":" + cTimestamp.substring(6, 8);
+                    graphFile.getData().removeIf((XYChart.Series data) -> data.getName().contains(cTimestampID));
+                    fileCardsStack.getChildren().remove(dataCard);
+                } else {
+                    int size = graphStats.getData().size();
+                    for (int i = 0; i < size; i++) {
+                        if (graphStats.getData().get(i).getName().contains(cID)) {
+                            graphStats.getData().remove(i);
+                            size = graphStats.getData().size();
+                        }
+                    }
+                    dataCardsStack.getChildren().remove(dataCard);
+                }
+            }
+        });
+
+        contextMenu.getItems().addAll(exportImageToClipboardDataCardMenu, exportImageToFileDataCardMenu, goToFileDataCardMenu, new SeparatorMenuItem(), removeCapacitorMenu);
+
+        dataCard.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
+            @Override
+            public void handle(ContextMenuEvent event) {
+                contextMenu.show(dataCard, event.getScreenX(), event.getScreenY());
+            }
+        });
 
         Label title = new Label(cID);
         if (file) {
@@ -931,7 +1048,6 @@ public class GUIController implements Initializable {
         VBox dataCell = new VBox();
         dataCell.setMaxSize(90, 45);
         dataCell.setAlignment(Pos.CENTER);
-        dataCell.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
 
         VBox titleVBox = new VBox();
         Label cellTitle = new Label(title);
@@ -986,7 +1102,6 @@ public class GUIController implements Initializable {
         VBox datesCell = new VBox();
         datesCell.setMaxSize(90, 45);
         datesCell.setAlignment(Pos.CENTER);
-        datesCell.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
 
         VBox titleVBox = new VBox();
         Label cellTitle = new Label(title);
@@ -1035,6 +1150,7 @@ public class GUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
         serialReadButton.setOnMouseEntered(e -> serialReadButton.setStyle("-fx-background-color: #5A2728;"));
         serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: transparent;"));
         fileReadButton.setOnMouseEntered(e -> fileReadButton.setStyle("-fx-background-color: #5A2728;"));
