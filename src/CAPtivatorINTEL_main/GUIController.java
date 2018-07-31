@@ -629,7 +629,6 @@ public class GUIController implements Initializable {
                         public void run() {
                             graphFile.getData().addAll(voltageDataFile, currentDataFile);
                             fileCardsStack.getChildren().add(createDataCard(selectCapacitorDrop.getValue(), sessionID, true));
-                            System.out.println("FileCardsStack children: " + fileCardsStack.getChildren());
                         }
                     });
                     return null;

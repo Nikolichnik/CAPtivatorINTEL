@@ -80,7 +80,6 @@ public final class DataCard extends VBox {
     private HBox fileCardsStack, dataCardsStack;
 
     DataCard(String cIDIn, String cTimestampIn, boolean fileIn, Stage stageIn, LineChart<?, ?> graphFileIn, LineChart<?, ?> graphStatsIn, HBox fileCardsStackIn, HBox dataCardsStackIn) {
-        System.out.println("Entered constructor!");
         this.cID = cIDIn;
         this.cTimestamp = cTimestampIn;
         this.file = fileIn;
@@ -313,8 +312,6 @@ public final class DataCard extends VBox {
 
         VBox cellDates = createDatesCell("Dates", dateStart, days, dateLast);
         
-        System.out.println("CellDates: " + cellDates.toString());
-
         dataCard.getChildren().addAll(cellQ, cellEnergy, cellDates);
 
         Region spacer = new Region();
