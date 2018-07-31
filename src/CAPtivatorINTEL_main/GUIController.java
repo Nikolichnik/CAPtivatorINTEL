@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +39,6 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
-import javafx.event.Event;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -46,7 +46,6 @@ import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.geometry.Side;
-import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.PieChart;
@@ -76,7 +75,6 @@ import javafx.stage.Stage;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.control.MenuItemBuilder;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
@@ -85,7 +83,6 @@ import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
 
@@ -140,7 +137,7 @@ public class GUIController implements Initializable {
     private TextField capacitorIDTextBox;
 
     @FXML
-    private VBox readStatsVBox, readFileVBox, readFromSerialVBox;
+    private VBox readStatsVBox, readFileVBox, readFromSerialVBox, dataGraphsStack;
 
     @FXML
     private HBox hBox, fileCardsStack, dataCardsStack;
@@ -838,7 +835,7 @@ public class GUIController implements Initializable {
         if (file) {
             try (Scanner scanner = new Scanner(new File(addressRaw));) {
                 while (scanner.hasNextLine()) {
-                    currents.add(Collections.list(new StringTokenizer(scanner.nextLine(), ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList()).get(2));
+                    currents.add(Collections.list(new StringTokenizer(scanner.nextLine(), ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList()).get(1));
                 }
                 int sum = 0;
                 for (Integer curr : currents) {
@@ -876,8 +873,10 @@ public class GUIController implements Initializable {
         dataCard.setNodeOrientation(NodeOrientation.LEFT_TO_RIGHT);
 
         ContextMenu contextMenu = new ContextMenu();
+        contextMenu.getStyleClass().add("context-menu");
 
-        MenuItem exportImageToClipboardDataCardMenu = new MenuItem("Copy image with data");
+        MenuItem exportImageToClipboardDataCardMenu = new MenuItem("Copy graph with data");
+        exportImageToClipboardDataCardMenu.getStyleClass().add("context-menu-item");
         exportImageToClipboardDataCardMenu.setAccelerator(new KeyCodeCombination(KeyCode.D, KeyCombination.CONTROL_DOWN)); //KeyCombination.keyCombination("Ctrl+D")
         exportImageToClipboardDataCardMenu.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -890,7 +889,8 @@ public class GUIController implements Initializable {
             }
         });
 
-        MenuItem exportImageToFileDataCardMenu = new MenuItem("Export image with data");
+        MenuItem exportImageToFileDataCardMenu = new MenuItem("Export graph with data");
+        exportImageToFileDataCardMenu.getStyleClass().add("context-menu-item");
         exportImageToFileDataCardMenu.setAccelerator(new KeyCodeCombination(KeyCode.E, KeyCombination.CONTROL_DOWN));
         exportImageToFileDataCardMenu.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -913,7 +913,8 @@ public class GUIController implements Initializable {
         });
 
         MenuItem goToFileDataCardMenu = new MenuItem("Open source file");
-        goToFileDataCardMenu.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
+        goToFileDataCardMenu.getStyleClass().add("context-menu-item");
+//        goToFileDataCardMenu.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
         final String addressOpenRawFile = addressRaw;
         goToFileDataCardMenu.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -931,6 +932,7 @@ public class GUIController implements Initializable {
         });
 
         MenuItem removeCapacitorMenu = new MenuItem("Remove capacitor " + cID);
+        removeCapacitorMenu.getStyleClass().add("context-menu-item");
         removeCapacitorMenu.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
@@ -952,7 +954,6 @@ public class GUIController implements Initializable {
         });
 
         contextMenu.getItems().addAll(exportImageToClipboardDataCardMenu, exportImageToFileDataCardMenu, goToFileDataCardMenu, new SeparatorMenuItem(), removeCapacitorMenu);
-
         dataCard.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
             @Override
             public void handle(ContextMenuEvent event) {
@@ -1202,6 +1203,145 @@ public class GUIController implements Initializable {
         graphCapacities.setCategoryGap(13);
         graphCapacities.setBarGap(5);
         graphCapacities.getData().addAll(statsAverageCapacities, statsLastCapacities);
+
+        ContextMenu contextMenuGraphFile = new ContextMenu();
+        contextMenuGraphFile.getStyleClass().add("context-menu");
+
+        MenuItem exportImageToClipboardGraphFileMenu = new MenuItem("Copy graph");
+        exportImageToClipboardGraphFileMenu.getStyleClass().add("context-menu-item");
+        exportImageToClipboardGraphFileMenu.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN)); //KeyCombination.keyCombination("Ctrl+D")
+        exportImageToClipboardGraphFileMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = graphFile.snapshot(new SnapshotParameters(), null);
+                ClipboardContent cc = new ClipboardContent();
+                cc.putImage(image);
+                Clipboard.getSystemClipboard().setContent(cc);
+                System.out.println("Ctrl+G pressed");
+            }
+        });
+
+        MenuItem exportImageToFileGraphFileMenu = new MenuItem("Export graph");
+        exportImageToFileGraphFileMenu.getStyleClass().add("context-menu-item");
+        exportImageToFileGraphFileMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = graphFile.snapshot(new SnapshotParameters(), null);
+                FileChooser fileChooser = new FileChooser();
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PNG images (*.png)", "*.png");
+                fileChooser.getExtensionFilters().add(extFilter);
+
+                File file = fileChooser.showSaveDialog(stage);
+
+                if (file != null) {
+                    try {
+                        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+                    } catch (IOException e) {
+                        System.out.println("Image could not be written!");
+                    }
+                }
+            }
+        });
+
+        contextMenuGraphFile.getItems().addAll(exportImageToClipboardGraphFileMenu, exportImageToFileGraphFileMenu);
+        graphFile.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
+            @Override
+            public void handle(ContextMenuEvent event) {
+                contextMenuGraphFile.show(graphFile, event.getScreenX(), event.getScreenY());
+            }
+        });
+
+        ContextMenu contextMenuGraphStats = new ContextMenu();
+
+        MenuItem exportImageToClipboardGraphStatsMenu = new MenuItem("Copy graph");
+        exportImageToClipboardGraphStatsMenu.getStyleClass().add("context-menu-item");
+        exportImageToClipboardGraphStatsMenu.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN)); //KeyCombination.keyCombination("Ctrl+D")
+        exportImageToClipboardGraphStatsMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = graphStats.snapshot(new SnapshotParameters(), null);
+                ClipboardContent cc = new ClipboardContent();
+                cc.putImage(image);
+                Clipboard.getSystemClipboard().setContent(cc);
+                System.out.println("Ctrl+G pressed");
+            }
+        });
+
+        MenuItem exportImageToFileGraphStatsMenu = new MenuItem("Export graph");
+        exportImageToFileGraphStatsMenu.getStyleClass().add("context-menu-item");
+        exportImageToFileGraphStatsMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = graphStats.snapshot(new SnapshotParameters(), null);
+                FileChooser fileChooser = new FileChooser();
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PNG images (*.png)", "*.png");
+                fileChooser.getExtensionFilters().add(extFilter);
+
+                File file = fileChooser.showSaveDialog(stage);
+
+                if (file != null) {
+                    try {
+                        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+                    } catch (IOException e) {
+                        System.out.println("Image could not be written!");
+                    }
+                }
+            }
+        });
+
+        contextMenuGraphStats.getItems().addAll(exportImageToClipboardGraphStatsMenu, exportImageToFileGraphStatsMenu);
+        graphStats.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
+            @Override
+            public void handle(ContextMenuEvent event) {
+                contextMenuGraphStats.show(graphStats, event.getScreenX(), event.getScreenY());
+            }
+        });
+
+        ContextMenu contextMenuGraphCapacities = new ContextMenu();
+
+        MenuItem exportImageToClipboardGraphCapacitiesMenu = new MenuItem("Copy graph");
+        exportImageToClipboardGraphCapacitiesMenu.getStyleClass().add("context-menu-item");
+        exportImageToClipboardGraphCapacitiesMenu.setAccelerator(new KeyCodeCombination(KeyCode.G, KeyCombination.CONTROL_DOWN)); //KeyCombination.keyCombination("Ctrl+D")
+        exportImageToClipboardGraphCapacitiesMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = graphCapacities.snapshot(new SnapshotParameters(), null);
+                ClipboardContent cc = new ClipboardContent();
+                cc.putImage(image);
+                Clipboard.getSystemClipboard().setContent(cc);
+                System.out.println("Ctrl+G pressed");
+            }
+        });
+
+        MenuItem exportImageToFileGraphCapacitiesMenu = new MenuItem("Export graph");
+        exportImageToFileGraphCapacitiesMenu.getStyleClass().add("context-menu-item");
+        exportImageToFileGraphCapacitiesMenu.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                WritableImage image = graphCapacities.snapshot(new SnapshotParameters(), null);
+                FileChooser fileChooser = new FileChooser();
+                FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("PNG images (*.png)", "*.png");
+                fileChooser.getExtensionFilters().add(extFilter);
+
+                File file = fileChooser.showSaveDialog(stage);
+
+                if (file != null) {
+                    try {
+                        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+                    } catch (IOException e) {
+                        System.out.println("Image could not be written!");
+                    }
+                }
+            }
+        });
+
+        contextMenuGraphCapacities.getItems().addAll(exportImageToClipboardGraphCapacitiesMenu, exportImageToFileGraphCapacitiesMenu);
+        graphCapacities.setOnContextMenuRequested(new EventHandler<ContextMenuEvent>() {
+            @Override
+            public void handle(ContextMenuEvent event) {
+                contextMenuGraphCapacities.show(graphCapacities, event.getScreenX(), event.getScreenY());
+            }
+        });
 
         dropShadow.setRadius(10);
         dropShadow.setColor(Color.color(0, 0, 0, 0.2));

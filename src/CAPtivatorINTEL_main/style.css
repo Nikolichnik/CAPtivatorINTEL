@@ -22,5 +22,12 @@
     -fx-background-radius: 0;
 }
 
+.context-menu:focused {
+    -fx-background-color: #FFFFFF;
+}
+
+.context-menu-item:focused {
+    -fx-background-color: #6D3437;
+}
 
 

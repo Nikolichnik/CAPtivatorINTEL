@@ -2,14 +2,10 @@ package CAPtivatorINTEL_main;
 
 import java.net.URL;
 import javafx.application.Application;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import javafx.stage.Screen;
 import javafx.stage.Stage;
 import static javafx.stage.StageStyle.TRANSPARENT;
 
@@ -37,7 +33,6 @@ public class CAPtivatorINTEL extends Application {
             System.out.println("  * url: " + url);
             System.out.print("  * ");
             System.out.println("    ----------------------------------------\n");
-            ex.printStackTrace();
         }
     }
 
