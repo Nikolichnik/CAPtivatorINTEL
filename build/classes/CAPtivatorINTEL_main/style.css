@@ -22,8 +22,8 @@
     -fx-background-radius: 0;
 }
 
-.context-menu:focused {
-    -fx-background-color: #FFFFFF;
+.context-menu {
+    -fx-background-color: rgba(255, 255, 255, 0.8);
 }
 
 .context-menu-item:focused {
