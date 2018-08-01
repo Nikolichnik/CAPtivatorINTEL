@@ -1,6 +1,8 @@
 package CAPtivatorINTEL_main;
 
-import FileHandling.FileReader;
+import guiElements.LineChartWithDetails;
+import guiElements.DataCard;
+import fileHandling.FileReader;
 import com.fazecast.jSerialComm.SerialPort;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
@@ -59,6 +61,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.ProgressBar;
@@ -69,9 +72,12 @@ import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
+import org.gillius.jfxutils.chart.ChartPanManager;
+import org.gillius.jfxutils.chart.JFXChartUtil;
 
 public class GUIController implements Initializable {
 
@@ -612,6 +618,7 @@ public class GUIController implements Initializable {
             };
             ProgressBar progressBar = new ProgressBar();
             progressBar.setOpacity(0.7);
+            progressBar.setEffect(dropShadow);
             graphStackFile.getChildren().add(progressBar);
 //            progressBar.progressProperty().bind(task.progressProperty());
             task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
@@ -705,6 +712,7 @@ public class GUIController implements Initializable {
             };
             ProgressBar progressBar = new ProgressBar();
             progressBar.setOpacity(0.7);
+            progressBar.setEffect(dropShadow);
             graphStackFile.getChildren().add(progressBar);
 //            progressBar.progressProperty().bind(task.progressProperty());
             task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
@@ -746,7 +754,9 @@ public class GUIController implements Initializable {
 
         graphStackSerial.getChildren().add(graphSerial);
         graphStackFile.getChildren().add(graphFile);
+        graphStackFile.setAlignment(Pos.TOP_CENTER);
         graphStackStats.getChildren().add(graphStats);
+        graphStackStats.setAlignment(Pos.TOP_CENTER);
 
         serialReadButton.setOnMouseEntered(e -> serialReadButton.setStyle("-fx-background-color: #5A2728;"));
         serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: transparent;"));
