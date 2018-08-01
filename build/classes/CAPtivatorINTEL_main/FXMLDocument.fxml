@@ -84,75 +84,6 @@
                         </StackPane>
                             </children>
                         </VBox>
-                        <VBox fx:id="readFileVBox" nodeOrientation="LEFT_TO_RIGHT">
-                            <children>
-                        <HBox fx:id="fileCardsGraphStack" nodeOrientation="RIGHT_TO_LEFT" VBox.vgrow="ALWAYS">
-                           <children>
-                              <HBox fx:id="fileCardsStack" nodeOrientation="RIGHT_TO_LEFT" />
-                              <StackPane fx:id="graphStackFile" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" HBox.hgrow="ALWAYS">
-                                 <effect>
-                                    <DropShadow color="#0000004d" />
-                                 </effect>
-                              </StackPane>
-                           </children>
-                        </HBox>
-                        <StackPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" VBox.vgrow="ALWAYS">
-                           <children>
-                                      <HBox fx:id="toolsFile" alignment="CENTER_LEFT" maxHeight="-Infinity" onMouseDragged="#resize" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
-                                          <children>
-                                    <JFXComboBox fx:id="selectCapacitorDrop" editable="true" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseEntered="#handleSelectCapacitorDropClick" onMousePressed="#handleSelectCapacitorDropClick" prefHeight="25.0" prefWidth="113.0" promptText="Select capacitor...">
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="9.0" right="3.0" top="3.0" />
-                                       </HBox.margin>
-                                    </JFXComboBox>
-                                    <ImageView fx:id="spacer1" fitHeight="21.0" fitWidth="5.0" pickOnBounds="true">
-                                       <image>
-                                          <Image url="@resources/img/spacer.png" />
-                                       </image>
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="9.0" right="9.0" top="3.0" />
-                                       </HBox.margin>
-                                    </ImageView>
-                                    <JFXComboBox fx:id="selectSessionDrop" focusColor="#5a2728" layoutX="16.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMousePressed="#handleSelectSessionDropClick" prefHeight="25.0" prefWidth="121.0" promptText="Select session...">
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                                       </HBox.margin>
-                                    </JFXComboBox>
-                                    <ImageView fx:id="spacer11" fitHeight="21.0" fitWidth="5.0" layoutX="145.0" layoutY="16.0" pickOnBounds="true">
-                                       <image>
-                                          <Image url="@resources/img/spacer.png" />
-                                       </image>
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="9.0" right="9.0" top="3.0" />
-                                       </HBox.margin>
-                                    </ImageView>
-                                    <JFXButton fx:id="addFileButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleAddFileClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Add file">
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                                       </HBox.margin>
-                                    </JFXButton>
-                                    <JFXButton fx:id="removeFileButton" layoutX="303.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleRemoveFileClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" styleClass="buttonsTools" stylesheets="@style.css" text="Remove file">
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
-                                       </HBox.margin>
-                                    </JFXButton>
-                                              <Region fx:id="bottomPanelFile" prefHeight="31.0" prefWidth="73.0" HBox.hgrow="ALWAYS" />
-                                    <JFXButton fx:id="removeAllFilesButton" layoutX="303.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleRemoveAllFilesClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728; -fx-background-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Remove all" textFill="WHITESMOKE">
-                                       <HBox.margin>
-                                          <Insets bottom="3.0" left="3.0" right="4.0" top="3.0" />
-                                       </HBox.margin>
-                                    </JFXButton>
-                                          </children>
-                                      </HBox>
-                              <Pane fx:id="dragPaneFile" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
-                                 <cursor>
-                                    <Cursor fx:constant="NW_RESIZE" />
-                                 </cursor>
-                              </Pane>
-                           </children>
-                        </StackPane>
-                            </children>
-                        </VBox>
                         <VBox fx:id="readStatsVBox" layoutX="10.0" layoutY="10.0" nodeOrientation="LEFT_TO_RIGHT">
                             <children>
                         <HBox fx:id="dataCardsGraphsStack" nodeOrientation="RIGHT_TO_LEFT" VBox.vgrow="ALWAYS">
@@ -180,7 +111,7 @@
                            <children>
                                       <HBox fx:id="toolsStats" alignment="CENTER_LEFT" maxHeight="-Infinity" onMouseDragged="#resize" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
                                           <children>
-                                    <JFXComboBox fx:id="selectStatsDrop" editable="true" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseEntered="#handleSelectStatsDropClick" onMousePressed="#handleSelectStatsDropClick" prefHeight="25.0" prefWidth="113.0" promptText="Select capacitor...">
+                                    <JFXComboBox fx:id="selectStatsDrop" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleSelectStatsDrop" onMouseEntered="#handleSelectStatsDropClick" onMousePressed="#handleSelectStatsDropClick" prefHeight="25.0" prefWidth="113.0" promptText="Select capacitor...">
                                        <HBox.margin>
                                           <Insets bottom="3.0" left="9.0" right="3.0" top="3.0" />
                                        </HBox.margin>
@@ -193,8 +124,6 @@
                                           <Insets bottom="3.0" left="9.0" right="9.0" top="3.0" />
                                        </HBox.margin>
                                     </ImageView>
-                                    <JFXButton fx:id="addStatsButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleAddStatsButtonClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Add stats" />
-                                    <JFXButton fx:id="clearStatsButton" layoutX="158.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleClearStatsButtonClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" styleClass="buttonsTools" stylesheets="@style.css" text="Clear stats" />
                                               <Region fx:id="bottomPanelStats" prefHeight="31.0" prefWidth="73.0" HBox.hgrow="ALWAYS" />
                                     <JFXButton fx:id="clearAllStatsButton" layoutX="123.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleClearAllStatsButtonClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728; -fx-background-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Clear all" textFill="WHITESMOKE">
                                        <HBox.margin>
@@ -204,6 +133,65 @@
                                           </children>
                                       </HBox>
                               <Pane fx:id="dragPaneStats" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
+                                 <cursor>
+                                    <Cursor fx:constant="NW_RESIZE" />
+                                 </cursor>
+                              </Pane>
+                           </children>
+                        </StackPane>
+                            </children>
+                        </VBox>
+                        <VBox fx:id="readFileVBox" nodeOrientation="LEFT_TO_RIGHT">
+                            <children>
+                        <HBox fx:id="fileCardsGraphStack" nodeOrientation="RIGHT_TO_LEFT" VBox.vgrow="ALWAYS">
+                           <children>
+                              <HBox fx:id="fileCardsStack" nodeOrientation="RIGHT_TO_LEFT" />
+                              <StackPane fx:id="graphStackFile" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" HBox.hgrow="ALWAYS">
+                                 <effect>
+                                    <DropShadow color="#0000004d" />
+                                 </effect>
+                              </StackPane>
+                           </children>
+                        </HBox>
+                        <StackPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" VBox.vgrow="ALWAYS">
+                           <children>
+                                      <HBox fx:id="toolsFile" alignment="CENTER_LEFT" maxHeight="-Infinity" onMouseDragged="#resize" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
+                                          <children>
+                                    <JFXComboBox fx:id="selectCapacitorDrop" focusColor="#5a2728" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleSelectCapacitorDrop" onMouseEntered="#handleSelectCapacitorDropClick" onMousePressed="#handleSelectCapacitorDropClick" prefHeight="25.0" prefWidth="113.0" promptText="Select capacitor...">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="9.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXComboBox>
+                                    <ImageView fx:id="spacer1" fitHeight="21.0" fitWidth="5.0" pickOnBounds="true">
+                                       <image>
+                                          <Image url="@resources/img/spacer.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="9.0" right="9.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                    <JFXComboBox fx:id="selectSessionDrop" focusColor="#5a2728" layoutX="16.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleSelectSessionDrop" onMousePressed="#handleSelectSessionDropClick" prefHeight="25.0" prefWidth="145.0" promptText="Select session...">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXComboBox>
+                                    <ImageView fx:id="spacer11" fitHeight="21.0" fitWidth="5.0" layoutX="145.0" layoutY="16.0" pickOnBounds="true">
+                                       <image>
+                                          <Image url="@resources/img/spacer.png" />
+                                       </image>
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="9.0" right="9.0" top="3.0" />
+                                       </HBox.margin>
+                                    </ImageView>
+                                              <Region fx:id="bottomPanelFile" prefHeight="31.0" prefWidth="73.0" HBox.hgrow="ALWAYS" />
+                                    <JFXButton fx:id="removeAllFilesButton" layoutX="303.0" layoutY="14.0" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onAction="#handleRemoveAllFilesClick" prefHeight="25.0" prefWidth="83.0" ripplerFill="#5a2728" style="-fx-border-color: #5A2728; -fx-background-color: #5A2728;" styleClass="buttonsTools" stylesheets="@style.css" text="Remove all" textFill="WHITESMOKE">
+                                       <HBox.margin>
+                                          <Insets bottom="3.0" left="3.0" right="4.0" top="3.0" />
+                                       </HBox.margin>
+                                    </JFXButton>
+                                          </children>
+                                      </HBox>
+                              <Pane fx:id="dragPaneFile" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" onMouseDragged="#resize" prefHeight="7.0" prefWidth="7.0" StackPane.alignment="BOTTOM_RIGHT">
                                  <cursor>
                                     <Cursor fx:constant="NW_RESIZE" />
                                  </cursor>

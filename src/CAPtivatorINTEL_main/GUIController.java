@@ -33,8 +33,10 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.concurrent.WorkerStateEvent;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -59,6 +61,7 @@ import javafx.stage.Stage;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -86,7 +89,7 @@ public class GUIController implements Initializable {
 
     private final XYChart.Series statsAverageCapacities = new XYChart.Series();
     private final XYChart.Series statsLastCapacities = new XYChart.Series();
-    
+
     private LineChartWithDetails graphSerial = new LineChartWithDetails();
     private LineChartWithDetails graphFile = new LineChartWithDetails();
     private LineChartWithDetails graphStats = new LineChartWithDetails();
@@ -118,8 +121,8 @@ public class GUIController implements Initializable {
     private JFXButton minimiseButton, maximiseButton, closeButton,
             startMeasurementButton, pauseMeasurementButton, connectButton,
             serialReadButton, fileReadButton, statsReadButton,
-            addFileButton, removeFileButton, removeAllFilesButton,
-            addStatsButton, clearStatsButton, clearAllStatsButton;
+            addFileButton, removeAllFilesButton,
+            addStatsButton, clearAllStatsButton;
 
     @FXML
     private TextField capacitorIDTextBox;
@@ -447,9 +450,9 @@ public class GUIController implements Initializable {
         } else {
             resetConnect();
         }
-    } // Add check if cID is entered for the first time and prompt for nominal C value
+    }
 
-    public void resetConnect() {
+    private void resetConnect() {
         if (chosenPort != null) {
             chosenPort.closePort();
         }
@@ -500,73 +503,57 @@ public class GUIController implements Initializable {
     public void handleSelectCapacitorDropClick() {
         final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
         if (files.size() != selectCapacitorDrop.getItems().size()) {
-            task = new Task<Void>() {
+            Platform.runLater(new Runnable() {
                 @Override
-                public Void call() {
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            selectCapacitorDropItems.clear();
-                            for (String file : files) {
-                                selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
-                            }
-                            selectCapacitorDrop.getItems().addAll(selectCapacitorDropItems);
-                        }
-                    });
-                    return null;
+                public void run() {
+                    selectCapacitorDropItems.clear();
+                    for (String file : files) {
+                        selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
+                    }
+                    selectCapacitorDrop.getItems().addAll(selectCapacitorDropItems);
                 }
-            };
-            Thread th = new Thread(task);
-            th.setDaemon(true);
-            th.start();
+            });
         }
     }
 
-    public void handleSelectSessionDropClick() {
-        if (selectCapacitorDrop.getValue() != null) {
-            final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
-            task = new Task<Void>() {
-                @Override
-                public Void call() {
-                    Platform.runLater(new Runnable() {
-                        @Override
-                        public void run() {
-                            String item = "";
-                            DateFormat dtfIn = new SimpleDateFormat("yyyyMMddHHmm");
-                            DateFormat dtfOut = new SimpleDateFormat("dd/MM | HH:mm");
-                            selectSessionDropItems.clear();
-                            for (String file : files) {
-                                if (file.contains(selectCapacitorDrop.getValue())) {
-                                    item = file.substring(file.indexOf("_", file.indexOf("_") + 1) + 1, file.indexOf("."));
-                                    Date timestamp = null;
-                                    try {
-                                        timestamp = dtfIn.parse(item);
-                                    } catch (ParseException ex) {
-                                        System.out.println("File name format incorrect!");
-                                    }
-                                    selectSessionDropItems.add(dtfOut.format(timestamp) + " | " + file.substring(file.indexOf("_") + 1, file.indexOf("_", file.indexOf("_") + 1)));
-                                }
-                            }
-                            selectSessionDrop.getItems().clear();
-                            selectSessionDrop.getItems().addAll(selectSessionDropItems);
+    public void handleSelectCapacitorDrop() {
+        final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                String item = "";
+                DateFormat dtfIn = new SimpleDateFormat("yyyyMMddHHmm");
+                DateFormat dtfOut = new SimpleDateFormat("dd/MM | HH:mm");
+                selectSessionDropItems.clear();
+                for (String file : files) {
+                    if (file.contains(selectCapacitorDrop.getValue())) {
+                        item = file.substring(file.indexOf("_", file.indexOf("_") + 1) + 1, file.indexOf("."));
+                        Date timestamp = null;
+                        try {
+                            timestamp = dtfIn.parse(item);
+                        } catch (ParseException ex) {
+                            System.out.println("File name format incorrect!");
                         }
-                    });
-                    return null;
+                        selectSessionDropItems.add(dtfOut.format(timestamp) + " | " + file.substring(file.indexOf("_") + 1, file.indexOf("_", file.indexOf("_") + 1)));
+                    }
                 }
-            };
-            Thread th = new Thread(task);
-            th.setDaemon(true);
-            th.start();
-        } else {
+                selectSessionDrop.getItems().clear();
+                selectSessionDrop.getItems().addAll(selectSessionDropItems);
+            }
+        });
+    }
+
+    public void handleSelectSessionDropClick() {
+        if (selectCapacitorDrop.getValue() == null) {
             Alert alert = new Alert(AlertType.WARNING);
             alert.setTitle("Warning!");
-            alert.setHeaderText("Capacitor ID not selected!");
-            alert.setContentText("Please select capacitor ID in order to continue.");
+            alert.setHeaderText("Capacitor not selected!");
+            alert.setContentText("Please select capacitor in order to continue.");
             alert.showAndWait();
         }
     }
 
-    public void handleAddFileClick() {
+    public void handleSelectSessionDrop(Event event) {
         if (selectSessionDrop.getValue() != null) {
             DateFormat dtfIn = new SimpleDateFormat("dd/MM | HH:mm");
             DateFormat dtfOut = new SimpleDateFormat("MMddHHmm");
@@ -592,6 +579,7 @@ public class GUIController implements Initializable {
                     voltageDataFile.setName(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue() + "_U");
                     XYChart.Series currentDataFile = new XYChart.Series();
                     currentDataFile.setName(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue() + "_I");
+
                     try (Scanner scanner = new Scanner(new File(address));) {
                         List<Integer> linijaPodataka;
                         while (scanner.hasNextLine() && !isCancelled()) {
@@ -622,35 +610,20 @@ public class GUIController implements Initializable {
                     return null;
                 }
             };
+            ProgressBar progressBar = new ProgressBar();
+            progressBar.setOpacity(0.7);
+            graphStackFile.getChildren().add(progressBar);
+//            progressBar.progressProperty().bind(task.progressProperty());
+            task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent event) {
+                    graphStackFile.getChildren().remove(progressBar);
+                }
+            });
             Thread th = new Thread(task);
             th.setDaemon(true);
             th.start();
-        } else {
-            Alert alert = new Alert(AlertType.WARNING);
-            alert.setTitle("Warning!");
-            alert.setHeaderText("Session not selected!");
-            alert.setContentText("Please select session in order to continue.");
-            alert.showAndWait();
         }
-    }
-
-    public void handleRemoveFileClick() {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-//                graphFile.getChart().getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));                                              //.getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));
-                int size = fileCardsStack.getChildren().size();
-                for (int i = 0; i < size; i++) {
-                    if (fileCardsStack.getChildren().get(i).getId().contains(selectCapacitorDrop.getValue())) {
-                        fileCardsStack.getChildren().remove(fileCardsStack.getChildren().get(i));
-                        size = fileCardsStack.getChildren().size();
-                    }
-                }
-//                fileCardsStack.getChildren().stream().filter((card) -> (card.getId() == null ? false : card.getId().contains(selectCapacitorDrop.getValue()))).forEachOrdered((card) -> {
-//                    fileCardsStack.getChildren().remove(card);
-//                });
-            }
-        });
     }
 
     public void handleRemoveAllFilesClick() {
@@ -691,7 +664,7 @@ public class GUIController implements Initializable {
         }
     }
 
-    public void handleAddStatsButtonClick() {
+    public void handleSelectStatsDrop() {
         if (selectStatsDrop.getValue() != null) {
             task = new Task<Void>() {
                 @Override
@@ -730,6 +703,17 @@ public class GUIController implements Initializable {
                     return null;
                 }
             };
+            ProgressBar progressBar = new ProgressBar();
+            progressBar.setOpacity(0.7);
+            graphStackFile.getChildren().add(progressBar);
+//            progressBar.progressProperty().bind(task.progressProperty());
+            task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+                @Override
+                public void handle(WorkerStateEvent event) {
+                    progressBar.setVisible(false);
+                    graphStackFile.getChildren().remove(progressBar);
+                }
+            });
             Thread th = new Thread(task);
             th.setDaemon(true);
             th.start();
@@ -742,20 +726,24 @@ public class GUIController implements Initializable {
         }
     }
 
-    public void handleClearStatsButtonClick() {
-
-    }
-
     public void handleClearAllStatsButtonClick() {
-
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                graphStats.getChart().getData().clear();
+                dataCardsStack.getChildren().clear();
+            }
+        });
     }
 
-    public VBox createDataCard(String cID, String cTimestamp, boolean file) {
+    private VBox createDataCard(String cID, String cTimestamp, boolean file) {
         return new DataCard(cID, cTimestamp, file, stage, graphFile.getChart(), graphStats.getChart(), fileCardsStack, dataCardsStack);
-    }   
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        readFromSerialVBox.toFront();
+
         graphStackSerial.getChildren().add(graphSerial);
         graphStackFile.getChildren().add(graphFile);
         graphStackStats.getChildren().add(graphStats);
@@ -777,34 +765,23 @@ public class GUIController implements Initializable {
 
         selectCapacitorDropItems = FXCollections.observableArrayList();
         handleSelectCapacitorDropClick();
-        
+
         voltageData.setName("Voltage");
         currentData.setName("Current");
 
-        graphSerial.getChart().setCreateSymbols(false);
-        graphSerial.getChart().setAnimated(false);
-        graphSerial.getChart().getXAxis().setLabel("t [s]");
-        graphSerial.getChart().getYAxis().setLabel("I/U [mA/mV]");
-        graphSerial.getChart().setLegendSide(Side.BOTTOM);
-        graphSerial.getChart().getData().addAll(voltageData, currentData);
-
-        readFromSerialVBox.toFront();
         serialReadButton.setStyle("-fx-background-color: #5A2728;");
         fileReadButton.setStyle("-fx-background-color: transparent;");
         statsReadButton.setStyle("-fx-background-color: transparent;");
 
-        graphFile.getChart().setVisible(true);
-        graphFile.getChart().setCreateSymbols(false);
-        graphFile.getChart().setAnimated(false);
+        graphSerial.getChart().getXAxis().setLabel("t [s]");
+        graphSerial.getChart().getYAxis().setLabel("I/U [mA/mV]");
+        graphSerial.getChart().getData().addAll(voltageData, currentData);
+
         graphFile.getChart().getXAxis().setLabel("t [s]");
         graphFile.getChart().getYAxis().setLabel("I/U [mA/mV]");
-        graphFile.getChart().setLegendSide(Side.BOTTOM);
 
-        graphStats.getChart().setCreateSymbols(false);
-        graphStats.getChart().setAnimated(false);
         graphStats.getChart().getXAxis().setLabel("Number of cycles");
         graphStats.getChart().getYAxis().setLabel("C [F]");
-        graphStats.getChart().setLegendSide(Side.BOTTOM);
 
         graphCapacities.setAnimated(false);
         graphCapacities.getXAxis().setLabel("Capacitors");
