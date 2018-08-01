@@ -42,9 +42,7 @@ import javafx.event.Event;
 import javafx.fxml.Initializable;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
-import javafx.geometry.Side;
 import javafx.scene.chart.BarChart;
-import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -72,12 +70,9 @@ import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
-import org.gillius.jfxutils.chart.ChartPanManager;
-import org.gillius.jfxutils.chart.JFXChartUtil;
 
 public class GUIController implements Initializable {
 
@@ -127,8 +122,8 @@ public class GUIController implements Initializable {
     private JFXButton minimiseButton, maximiseButton, closeButton,
             startMeasurementButton, pauseMeasurementButton, connectButton,
             serialReadButton, fileReadButton, statsReadButton,
-            addFileButton, removeAllFilesButton,
-            addStatsButton, clearAllStatsButton;
+            removeAllFilesButton,
+            clearAllStatsButton;
 
     @FXML
     private TextField capacitorIDTextBox;
