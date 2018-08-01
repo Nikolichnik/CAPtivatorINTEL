@@ -66,6 +66,7 @@ import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javax.imageio.ImageIO;
 
@@ -85,6 +86,10 @@ public class GUIController implements Initializable {
 
     private final XYChart.Series statsAverageCapacities = new XYChart.Series();
     private final XYChart.Series statsLastCapacities = new XYChart.Series();
+    
+    private LineChartWithDetails graphSerial = new LineChartWithDetails();
+    private LineChartWithDetails graphFile = new LineChartWithDetails();
+    private LineChartWithDetails graphStats = new LineChartWithDetails();
 
     private int voltage = 0, current = 0, seconds = 0, cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0;
 
@@ -100,7 +105,7 @@ public class GUIController implements Initializable {
     Scene scene;
 
     @FXML
-    private LineChart<?, ?> graphSerial, graphFile, graphStats;
+    private StackPane graphStackSerial, graphStackFile, graphStackStats;
 
     @FXML
     private BarChart graphCapacities;
@@ -610,7 +615,7 @@ public class GUIController implements Initializable {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            graphFile.getData().addAll(voltageDataFile, currentDataFile);
+                            graphFile.getChart().getData().addAll(voltageDataFile, currentDataFile);
                             fileCardsStack.getChildren().add(createDataCard(selectCapacitorDrop.getValue(), sessionID, true));
                         }
                     });
@@ -633,7 +638,7 @@ public class GUIController implements Initializable {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                graphFile.getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));
+//                graphFile.getChart().getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));                                              //.getData().removeIf((XYChart.Series data) -> data.getName().contains(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue()));
                 int size = fileCardsStack.getChildren().size();
                 for (int i = 0; i < size; i++) {
                     if (fileCardsStack.getChildren().get(i).getId().contains(selectCapacitorDrop.getValue())) {
@@ -652,7 +657,7 @@ public class GUIController implements Initializable {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-                graphFile.getData().clear();
+                graphFile.getChart().getData().clear();
                 fileCardsStack.getChildren().clear();
             }
         });
@@ -718,7 +723,7 @@ public class GUIController implements Initializable {
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
-                            graphStats.getData().addAll(capacitanceStats);
+                            graphStats.getChart().getData().addAll(capacitanceStats);
                             dataCardsStack.getChildren().add(createDataCard(selectStatsDrop.getValue(), "", false));
                         }
                     });
@@ -746,11 +751,14 @@ public class GUIController implements Initializable {
     }
 
     public VBox createDataCard(String cID, String cTimestamp, boolean file) {
-        return new DataCard(cID, cTimestamp, file, stage, graphFile, graphStats, fileCardsStack, dataCardsStack);
+        return new DataCard(cID, cTimestamp, file, stage, graphFile.getChart(), graphStats.getChart(), fileCardsStack, dataCardsStack);
     }   
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        graphStackSerial.getChildren().add(graphSerial);
+        graphStackFile.getChildren().add(graphFile);
+        graphStackStats.getChildren().add(graphStats);
 
         serialReadButton.setOnMouseEntered(e -> serialReadButton.setStyle("-fx-background-color: #5A2728;"));
         serialReadButton.setOnMouseExited(e -> serialReadButton.setStyle("-fx-background-color: transparent;"));
@@ -769,32 +777,34 @@ public class GUIController implements Initializable {
 
         selectCapacitorDropItems = FXCollections.observableArrayList();
         handleSelectCapacitorDropClick();
-
-        graphSerial.setCreateSymbols(false);
-        graphSerial.setAnimated(false);
-        graphSerial.getXAxis().setLabel("t [s]");
-        graphSerial.getYAxis().setLabel("I/U [mA/mV]");
-        graphSerial.setLegendSide(Side.BOTTOM);
+        
         voltageData.setName("Voltage");
         currentData.setName("Current");
-        graphSerial.getData().addAll(voltageData, currentData);
+
+        graphSerial.getChart().setCreateSymbols(false);
+        graphSerial.getChart().setAnimated(false);
+        graphSerial.getChart().getXAxis().setLabel("t [s]");
+        graphSerial.getChart().getYAxis().setLabel("I/U [mA/mV]");
+        graphSerial.getChart().setLegendSide(Side.BOTTOM);
+        graphSerial.getChart().getData().addAll(voltageData, currentData);
 
         readFromSerialVBox.toFront();
         serialReadButton.setStyle("-fx-background-color: #5A2728;");
         fileReadButton.setStyle("-fx-background-color: transparent;");
         statsReadButton.setStyle("-fx-background-color: transparent;");
 
-        graphFile.setCreateSymbols(false);
-        graphFile.setAnimated(false);
-        graphFile.getXAxis().setLabel("t [s]");
-        graphFile.getYAxis().setLabel("I/U [mA/mV]");
-        graphFile.setLegendSide(Side.BOTTOM);
+        graphFile.getChart().setVisible(true);
+        graphFile.getChart().setCreateSymbols(false);
+        graphFile.getChart().setAnimated(false);
+        graphFile.getChart().getXAxis().setLabel("t [s]");
+        graphFile.getChart().getYAxis().setLabel("I/U [mA/mV]");
+        graphFile.getChart().setLegendSide(Side.BOTTOM);
 
-        graphStats.setCreateSymbols(false);
-        graphStats.setAnimated(false);
-        graphStats.getXAxis().setLabel("Number of cycles");
-        graphStats.getYAxis().setLabel("C [F]");
-        graphStats.setLegendSide(Side.BOTTOM);
+        graphStats.getChart().setCreateSymbols(false);
+        graphStats.getChart().setAnimated(false);
+        graphStats.getChart().getXAxis().setLabel("Number of cycles");
+        graphStats.getChart().getYAxis().setLabel("C [F]");
+        graphStats.getChart().setLegendSide(Side.BOTTOM);
 
         graphCapacities.setAnimated(false);
         graphCapacities.getXAxis().setLabel("Capacitors");

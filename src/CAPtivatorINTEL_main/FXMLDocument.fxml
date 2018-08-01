@@ -7,7 +7,6 @@
 <?import javafx.scene.Cursor?>
 <?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.effect.BoxBlur?>
 <?import javafx.scene.effect.DropShadow?>
@@ -27,14 +26,11 @@
                     <children>
                         <VBox fx:id="readFromSerialVBox" nodeOrientation="LEFT_TO_RIGHT">
                             <children>
-                                <LineChart fx:id="graphSerial" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
-                                    <xAxis>
-                                        <NumberAxis side="BOTTOM" />
-                                    </xAxis>
-                                    <yAxis>
-                                        <NumberAxis side="LEFT" />
-                                    </yAxis>
-                                </LineChart>
+                        <StackPane fx:id="graphStackSerial" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
+                           <effect>
+                              <DropShadow color="#0000004d" />
+                           </effect>
+                        </StackPane>
                         <StackPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" VBox.vgrow="ALWAYS">
                            <children>
                                       <HBox fx:id="toolsSerial" alignment="CENTER_LEFT" maxHeight="-Infinity" prefHeight="33.0" prefWidth="548.0" style="-fx-background-color: #DBDBDB;">
@@ -93,17 +89,11 @@
                         <HBox fx:id="fileCardsGraphStack" nodeOrientation="RIGHT_TO_LEFT" VBox.vgrow="ALWAYS">
                            <children>
                               <HBox fx:id="fileCardsStack" nodeOrientation="RIGHT_TO_LEFT" />
-                                      <LineChart fx:id="graphFile" nodeOrientation="LEFT_TO_RIGHT" prefHeight="369.0" prefWidth="543.0" style="-fx-background-color: #F5F5F5;" HBox.hgrow="ALWAYS">
-                                          <xAxis>
-                                              <NumberAxis side="BOTTOM" />
-                                          </xAxis>
-                                          <yAxis>
-                                              <NumberAxis side="LEFT" />
-                                          </yAxis>
+                              <StackPane fx:id="graphStackFile" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" HBox.hgrow="ALWAYS">
                                  <effect>
                                     <DropShadow color="#0000004d" />
                                  </effect>
-                                      </LineChart>
+                              </StackPane>
                            </children>
                         </HBox>
                         <StackPane maxHeight="-Infinity" minHeight="-Infinity" prefHeight="33.0" VBox.vgrow="ALWAYS">
@@ -168,17 +158,10 @@
                         <HBox fx:id="dataCardsGraphsStack" nodeOrientation="RIGHT_TO_LEFT" VBox.vgrow="ALWAYS">
                            <children>
                               <HBox fx:id="dataCardsStack" nodeOrientation="RIGHT_TO_LEFT" />
-                              <VBox fx:id="dataGraphsStack" HBox.hgrow="ALWAYS">
+                              <VBox fx:id="dataGraphsStack" style="-fx-background-color: #F5F5F5;" HBox.hgrow="ALWAYS">
                                  <children>
-                                            <LineChart fx:id="graphStats" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
-                                                <xAxis>
-                                                    <NumberAxis side="BOTTOM" />
-                                                </xAxis>
-                                                <yAxis>
-                                                    <NumberAxis side="LEFT" />
-                                                </yAxis>
-                                            </LineChart>
-                                    <BarChart fx:id="graphCapacities" nodeOrientation="LEFT_TO_RIGHT" style="-fx-background-color: #F5F5F5;" VBox.vgrow="ALWAYS">
+                                    <StackPane fx:id="graphStackStats" nodeOrientation="LEFT_TO_RIGHT" VBox.vgrow="ALWAYS" />
+                                    <BarChart fx:id="graphCapacities" nodeOrientation="LEFT_TO_RIGHT" VBox.vgrow="ALWAYS">
                                       <xAxis>
                                         <CategoryAxis side="BOTTOM" />
                                       </xAxis>

@@ -33,6 +33,7 @@ public class CAPtivatorINTEL extends Application {
             System.out.println("  * url: " + url);
             System.out.print("  * ");
             System.out.println("    ----------------------------------------\n");
+            ex.printStackTrace();
         }
     }
 
