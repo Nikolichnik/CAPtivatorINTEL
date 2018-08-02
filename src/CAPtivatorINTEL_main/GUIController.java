@@ -104,7 +104,7 @@ public class GUIController implements Initializable {
     private OutputStream outputStream;
     private PrintStream serialWriter;
 
-    private int voltage = 0, current = 0, seconds = 0, cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3;
+    private int cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3;
 
 //    private Task task;      // This could be trouble with graph overlaps!
     private double xOffset, yOffset, nominalVoltage = 2.7;
@@ -362,9 +362,8 @@ public class GUIController implements Initializable {
                     }
                 }
             }
-
             if (confirm) {
-                Task task = new Task<Void>() {
+                Task taskSerial = new Task<Void>() {
                     @Override
                     public Void call() {
                         Platform.runLater(new Runnable() {
@@ -375,6 +374,10 @@ public class GUIController implements Initializable {
                                 selectPortDrop.setDisable(true);
                             }
                         });
+                        int voltage = 0;
+                        int current = 0;
+                        int seconds = 0;
+
                         comms.setChosenPort(SerialPort.getCommPort(selectPortDrop.getValue()));
                         chosenPort = comms.getChosenPort();
                         chosenPort.setComPortTimeouts(SerialPort.TIMEOUT_SCANNER, 0, 0);
@@ -468,21 +471,12 @@ public class GUIController implements Initializable {
                                         current = linijaPodataka.get(1);
                                         seconds = linijaPodataka.get(2);
                                         linijaPodataka.clear();
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                voltageData.getData().add(new XYChart.Data(seconds, voltage));
-                                                currentData.getData().add(new XYChart.Data(seconds, current));
-                                            }
-                                        });
+
+                                        voltageData.getData().add(new XYChart.Data(seconds, voltage));
+                                        currentData.getData().add(new XYChart.Data(seconds, current));
                                     } else {
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                voltageData.getData().clear();
-                                                currentData.getData().clear();
-                                            }
-                                        });
+                                        voltageData.getData().clear();
+                                        currentData.getData().clear();
                                     }
                                     if (fileWriter != null) {
                                         fileWriter.append(voltage + "," + current + "," + seconds + "\r\n");
@@ -496,9 +490,10 @@ public class GUIController implements Initializable {
                         return null;
                     }
                 };
-                Thread th = new Thread(task);
-                th.setDaemon(true);
-                th.start();
+                Thread threadSerial = new Thread(taskSerial);
+                threadSerial.setDaemon(true);
+                threadSerial.setPriority(10);
+                threadSerial.start();
             } else {
                 resetConnect();
             }
@@ -645,11 +640,11 @@ public class GUIController implements Initializable {
         }
     }
 
-    public void handleSelectSessionDrop(Event event) {
+    public void handleSelectSessionDrop() {
         if (selectSessionDrop.getValue() != null) {
             DateFormat dtfIn = new SimpleDateFormat("dd/MM | HH:mm");
             DateFormat dtfOut = new SimpleDateFormat("MMddHHmm");
-            Task task = new Task<Void>() {
+            Task taskFile = new Task<Void>() {
                 @Override
                 public Void call() {
                     String session = selectSessionDrop.getValue();
@@ -668,10 +663,12 @@ public class GUIController implements Initializable {
                         }
                     }
                     XYChart.Series voltageDataFile = new XYChart.Series();
-                    voltageDataFile.setName(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue() + "_U");
                     XYChart.Series currentDataFile = new XYChart.Series();
+                    voltageDataFile.setName(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue() + "_U");
                     currentDataFile.setName(selectCapacitorDrop.getValue() + "_" + selectSessionDrop.getValue() + "_I");
-
+                    int voltage = 0;
+                    int current = 0;
+                    int seconds = 0;
                     try (Scanner scanner = new Scanner(new File(address));) {
                         List<Integer> linijaPodataka;
                         while (scanner.hasNextLine() && !isCancelled()) {
@@ -706,15 +703,15 @@ public class GUIController implements Initializable {
             progressBar.setOpacity(0.7);
             progressBar.setEffect(dropShadow);
             graphStackFile.getChildren().add(progressBar);
-            task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
+            taskFile.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
                 @Override
                 public void handle(WorkerStateEvent event) {
                     graphStackFile.getChildren().remove(progressBar);
                 }
             });
-            Thread th = new Thread(task);
-            th.setDaemon(true);
-            th.start();
+            Thread threadFile = new Thread(taskFile);
+            threadFile.setDaemon(true);
+            threadFile.start();
         }
     }
 
@@ -731,7 +728,7 @@ public class GUIController implements Initializable {
     public void handleSelectStatsDropClick() {
         final List<String> files = new LinkedList(fileReader.getFileRawList(folderData));
         if (files.size() - 1 != selectStatsDrop.getItems().size()) {            // to exclude folder "raw"
-            Task task = new Task<Void>() {
+            Task taskStats = new Task<Void>() {
                 @Override
                 public Void call() {
                     Platform.runLater(new Runnable() {
@@ -750,9 +747,9 @@ public class GUIController implements Initializable {
                     return null;
                 }
             };
-            Thread th = new Thread(task);
-            th.setDaemon(true);
-            th.start();
+            Thread threadStats = new Thread(taskStats);
+            threadStats.setDaemon(true);
+            threadStats.start();
         }
     }
 
