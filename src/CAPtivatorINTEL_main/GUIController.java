@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -31,6 +32,8 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
+import javafx.animation.Animation;
+import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -62,6 +65,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
@@ -70,8 +74,10 @@ import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import javax.imageio.ImageIO;
 
 public class GUIController implements Initializable {
@@ -95,7 +101,10 @@ public class GUIController implements Initializable {
     private LineChartWithDetails graphFile = new LineChartWithDetails();
     private LineChartWithDetails graphStats = new LineChartWithDetails();
 
-    private int voltage = 0, current = 0, seconds = 0, cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0;
+    private OutputStream outputStream;
+    private PrintStream serialWriter;
+
+    private int voltage = 0, current = 0, seconds = 0, cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3;
 
     private Task task;
 
@@ -109,7 +118,7 @@ public class GUIController implements Initializable {
     Scene scene;
 
     @FXML
-    private StackPane graphStackSerial, graphStackFile, graphStackStats;
+    private StackPane graphStackSerial, graphStackFile, graphStackStats, monitorStack;
 
     @FXML
     private BarChart graphCapacities;
@@ -120,19 +129,27 @@ public class GUIController implements Initializable {
 
     @FXML
     private JFXButton minimiseButton, maximiseButton, closeButton,
-            startMeasurementButton, pauseMeasurementButton, connectButton,
+            startMeasurementButton, pauseMeasurementButton, decreaseCyclesButton, increaseCyclesButton, connectButton,
             serialReadButton, fileReadButton, statsReadButton,
             removeAllFilesButton,
             clearAllStatsButton;
 
-    @FXML
-    private TextField capacitorIDTextBox;
+    private FadeTransition fadeTransition = new FadeTransition(Duration.seconds(0.7));
 
     @FXML
-    private VBox readStatsVBox, readFileVBox, readFromSerialVBox, dataGraphsStack;
+    private Pane serialStatusPane;
 
     @FXML
-    private HBox hBox, fileCardsStack, dataCardsStack;
+    private TextField capacitorIDTextBox, serialMonitor;
+
+    @FXML
+    private Label dischargingLabel, chargingLabel, timer, cycleDisplay, totalCyclesLabel;
+
+    @FXML
+    private VBox readStatsVBox, readFileVBox, readFromSerialVBox;
+
+    @FXML
+    private HBox fileCardsStack, dataCardsStack;
 
     public void setStage(Stage stage) {
         this.stage = stage;
@@ -256,8 +273,17 @@ public class GUIController implements Initializable {
         }
     }
 
-    public void handleConnectClick() {
+    public void handleDecreaseCyclesButton() {
+        cycleDisplay.setText(String.valueOf(cycle) + "/" + String.valueOf(--totalCycles));
+        totalCyclesLabel.setText(String.valueOf(totalCycles));
+    }
 
+    public void handleIncreaseCyclesButton() {
+        cycleDisplay.setText(String.valueOf(cycle) + "/" + String.valueOf(++totalCycles));
+        totalCyclesLabel.setText(String.valueOf(totalCycles));
+    }
+
+    public void handleConnectClick() {
         String fileNameAll = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
         try {
             fileWriterAll = new FileWriter(fileNameAll, true);
@@ -355,60 +381,88 @@ public class GUIController implements Initializable {
                         chosenPort.openPort();
                         confirm = true;
 
+                        outputStream = chosenPort.getOutputStream();
+                        serialWriter = new PrintStream(outputStream);
+                        serialWriter.println("V" + String.valueOf(nominalVoltage));             // Communicate nominalVoltage to CAPtivatorGYM
+                        serialWriter.flush();
+
                         try (Scanner scanner = new Scanner(chosenPort.getInputStream())) {
-
-                            OutputStream outputStream = chosenPort.getOutputStream();           // Communicate nominalVoltage to CAPtivatorGYM
-                            PrintStream serialWriter = new PrintStream(outputStream);
-                            serialWriter.println("V" + String.valueOf(nominalVoltage));
-                            serialWriter.flush();
-
+                            startMeasurementButton.setDisable(false);
+                            pauseMeasurementButton.setDisable(false);
+                            long startCycle = 0;
+                            long endTime = 0;
                             List<Integer> linijaPodataka;
                             while (scanner.hasNextLine() && confirm && !isCancelled()) {
                                 try {
                                     String line = scanner.nextLine();
-                                    if (line.contains("Discharging...") && !capacitorIDTextBox.getText().trim().isEmpty()) {
-                                        LocalDateTime timestamp = LocalDateTime.now();
-                                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-                                        String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + dtf.format(timestamp) + "_" + ++cycle + ".txt";
-                                        try {
-                                            fileWriter = new FileWriter(fileName, false);
-                                        } catch (Exception ex) {
-                                            System.out.println("Unable to create file!");
+                                    Platform.runLater(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            serialMonitor.setText(line);
                                         }
-                                    }
-                                    if ((line.contains("Discharge cycle") || line.contains("Charge cycle")) && !capacitorIDTextBox.getText().trim().isEmpty()) {
-                                        LocalDateTime timestamp = LocalDateTime.now();
-                                        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-                                        ///
-                                        FileInputStream in = new FileInputStream(fileNameAll);
-                                        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-                                        String strLine = null, tmp;
-                                        while ((tmp = br.readLine()) != null) {
-                                            strLine = tmp;
+                                    });
+                                    if (line.contains("Discharging...")) {
+                                        dischargingLabel.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+                                        chargingLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+                                        if (cycle == 0) {
+                                            startCycle = System.currentTimeMillis();
+                                        } else if (cycle == 1) {
+                                            endTime = System.currentTimeMillis() + ((System.currentTimeMillis() - startCycle) * (totalCycles - 1));
                                         }
-                                        String lastLine;
-                                        if (strLine != null) {
-                                            lastLine = strLine.substring(strLine.indexOf(",") + 1, strLine.indexOf(",", strLine.indexOf(",") + 1));
-                                        } else {
-                                            lastLine = "0";
+                                        if (!capacitorIDTextBox.getText().trim().isEmpty()) {
+                                            LocalDateTime timestamp = LocalDateTime.now();
+                                            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+                                            String fileName = "data/raw/" + capacitorIDTextBox.getText() + "_" + dtf.format(timestamp) + "_" + ++cycle + ".txt";
+                                            try {
+                                                fileWriter = new FileWriter(fileName, false);
+                                            } catch (Exception ex) {
+                                                System.out.println("Unable to create file!");
+                                            }
                                         }
-                                        System.out.println(lastLine);
-                                        in.close();
-                                        cycleAll = Integer.parseInt(lastLine);
-                                        measuredCapacity = Integer.parseInt(line.substring(line.indexOf("=") + 2));
+                                    } else if (line.contains("Discharge cycle") || line.contains("Charge cycle")) {
+                                        serialWriter.println("C" + String.valueOf(totalCycles));             // Communicate totalCycles to CAPtivatorGYM
+                                        serialWriter.flush();
                                         if (line.contains("Discharge cycle")) {
-                                            cycleAll++;
+                                            chargingLabel.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+                                            dischargingLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
                                         }
-                                        String data = cycleAll + "," + dtf.format(timestamp) + "," + measuredCapacity;
-                                        fileWriterAll.append(data + "\r\n");
-                                        fileWriterAll.flush();
-                                    }
-                                    if (line.contains("Measurement complete!")) {
+                                        if (!capacitorIDTextBox.getText().trim().isEmpty()) {
+                                            LocalDateTime timestamp = LocalDateTime.now();
+                                            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+                                            ///
+                                            FileInputStream in = new FileInputStream(fileNameAll);
+                                            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+                                            String strLine = null, tmp;
+                                            while ((tmp = br.readLine()) != null) {
+                                                strLine = tmp;
+                                            }
+                                            String lastLine;
+                                            if (strLine != null) {
+                                                lastLine = strLine.substring(strLine.indexOf(",") + 1, strLine.indexOf(",", strLine.indexOf(",") + 1));
+                                            } else {
+                                                lastLine = "0";
+                                            }
+                                            System.out.println(lastLine);
+                                            in.close();
+                                            cycleAll = Integer.parseInt(lastLine);
+                                            measuredCapacity = Integer.parseInt(line.substring(line.indexOf("=") + 2));
+                                            if (line.contains("Discharge cycle")) {
+                                                cycleAll++;
+                                            }
+                                            String data = cycleAll + "," + dtf.format(timestamp) + "," + measuredCapacity;
+                                            fileWriterAll.append(data + "\r\n");
+                                            fileWriterAll.flush();
+                                        }
+                                    } else if (line.contains("Measurement complete!")) {
                                         fileWriter = null;
                                         fileWriterAll = null;
-                                    }
-
-                                    if (line.matches("\\d+,.*")) {
+                                        chargingLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+                                        dischargingLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+                                    } else if (line.matches("\\d+,.*")) {
+                                        if (cycle > 0) {
+                                            DecimalFormat numFormat = new DecimalFormat("#.0");
+                                            timer.setText(numFormat.format((System.currentTimeMillis() - endTime) / 1000 / 360));  // update timer label with hours to end
+                                        }
                                         linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
                                         voltage = linijaPodataka.get(0);
                                         current = linijaPodataka.get(1);
@@ -418,7 +472,7 @@ public class GUIController implements Initializable {
                                             @Override
                                             public void run() {
                                                 voltageData.getData().add(new XYChart.Data(seconds, voltage));
-                                                currentData.getData().add(new XYChart.Data(seconds, current));//                                            
+                                                currentData.getData().add(new XYChart.Data(seconds, current));                                            
                                             }
                                         });
                                     } else {
@@ -458,24 +512,61 @@ public class GUIController implements Initializable {
             chosenPort.closePort();
         }
         confirm = false;
+        selectPortDrop.setDisable(false);
+        connectButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+        connectButton.setText("Connect");
+        chargingLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+        dischargingLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+        decreaseCyclesButton.setDisable(false);
+        increaseCyclesButton.setDisable(false);
+        startMeasurementButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+        startMeasurementButton.setText("Start");
+        startMeasurementButton.setDisable(true);
+        fadeTransition.stop();
+        pauseMeasurementButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+        pauseMeasurementButton.setText("Pause");
+        pauseMeasurementButton.setDisable(true);
+        serialMonitor.clear();
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
                 voltageData.getData().clear();
                 currentData.getData().clear();
-                selectPortDrop.setDisable(false);
-                connectButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
-                connectButton.setText("Connect");
             }
         });
     }
 
     public void handleStartMeasurementButton() {
-
+        if (startMeasurementButton.getText().equals("Start")) {
+            serialWriter.println("S");                                          // Communicate Start to CAPtivatorGYM
+            serialWriter.flush();
+            startMeasurementButton.setText("Stop");
+            startMeasurementButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+        } else if (!pauseMeasurementButton.getText().equals("Paused")) {
+            serialWriter.println("X");                                          // Communicate Stop to CAPtivatorGYM
+            serialWriter.flush();
+            startMeasurementButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+            startMeasurementButton.setText("Start");
+        }
     }
 
     public void handlePauseMeasurementButton() {
-
+        if (startMeasurementButton.getText().equals("Stop")) {
+            if (pauseMeasurementButton.getText().equals("Pause")) {
+                serialWriter.println("P");                                          // Communicate Pause to CAPtivatorGYM
+                serialWriter.flush();
+                pauseMeasurementButton.setText("Paused");
+                pauseMeasurementButton.setStyle("-fx-background-color: #7C3034; -fx-text-fill: #DBDBDB;");
+                fadeTransition.setNode(pauseMeasurementButton);
+                fadeTransition.play();
+            } else {
+                fadeTransition.stop();
+                serialWriter.println("S");                                          // Communicate Start to CAPtivatorGYM
+                serialWriter.flush();
+                pauseMeasurementButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
+                pauseMeasurementButton.setText("Pause");
+            }
+        }
     }
 
     public void handleSelectPortDropClick() {
@@ -615,7 +706,6 @@ public class GUIController implements Initializable {
             progressBar.setOpacity(0.7);
             progressBar.setEffect(dropShadow);
             graphStackFile.getChildren().add(progressBar);
-//            progressBar.progressProperty().bind(task.progressProperty());
             task.setOnSucceeded(new EventHandler<WorkerStateEvent>() {
                 @Override
                 public void handle(WorkerStateEvent event) {
@@ -745,6 +835,14 @@ public class GUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        startMeasurementButton.setDisable(true);
+        pauseMeasurementButton.setDisable(true);
+
+        timer.setText("N/A");
+        cycleDisplay.setText(String.valueOf(cycle) + "/" + String.valueOf(totalCycles));
+
+        totalCyclesLabel.setText(String.valueOf(totalCycles));
+
         readFromSerialVBox.toFront();
 
         graphStackSerial.getChildren().add(graphSerial);
@@ -771,13 +869,13 @@ public class GUIController implements Initializable {
         selectCapacitorDropItems = FXCollections.observableArrayList();
         handleSelectCapacitorDropClick();
 
-        voltageData.setName("Voltage");
-        currentData.setName("Current");
-
         serialReadButton.setStyle("-fx-background-color: #5A2728;");
         fileReadButton.setStyle("-fx-background-color: transparent;");
         statsReadButton.setStyle("-fx-background-color: transparent;");
 
+        voltageData.setName("Voltage");
+        currentData.setName("Current");
+        
         graphSerial.getChart().getXAxis().setLabel("t [s]");
         graphSerial.getChart().getYAxis().setLabel("I/U [mA/mV]");
         graphSerial.getChart().getData().addAll(voltageData, currentData);
@@ -795,6 +893,8 @@ public class GUIController implements Initializable {
         graphCapacities.setCategoryGap(13);
         graphCapacities.setBarGap(5);
         graphCapacities.getData().addAll(statsAverageCapacities, statsLastCapacities);
+
+        monitorStack.toFront();
 
         ContextMenu contextMenuGraphFile = new ContextMenu();
         contextMenuGraphFile.getStyleClass().add("context-menu");
@@ -937,6 +1037,10 @@ public class GUIController implements Initializable {
 
         dropShadow.setRadius(10);
         dropShadow.setColor(Color.color(0, 0, 0, 0.2));
+
+        fadeTransition.setFromValue(1.0);
+        fadeTransition.setToValue(0.3);
+        fadeTransition.setCycleCount(Animation.INDEFINITE);
 
     }
 
