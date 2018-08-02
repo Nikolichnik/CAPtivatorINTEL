@@ -106,7 +106,7 @@ public class GUIController implements Initializable {
 
     private int voltage = 0, current = 0, seconds = 0, cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3;
 
-    private Task task;
+//    private Task task;      // This could be trouble with graph overlaps!
 
     private double xOffset, yOffset, nominalVoltage = 2.7;
 
@@ -364,7 +364,7 @@ public class GUIController implements Initializable {
             }
 
             if (confirm) {
-                task = new Task<Void>() {
+                Task task = new Task<Void>() {
                     @Override
                     public Void call() {
                         Platform.runLater(new Runnable() {
@@ -572,7 +572,7 @@ public class GUIController implements Initializable {
     public void handleSelectPortDropClick() {
         selectPortDropItems = comms.getPortList();
         if (selectPortDropItems.size() != selectPortDrop.getItems().size()) {
-            task = new Task<Void>() {
+            Task task = new Task<Void>() {
                 @Override
                 public Void call() {
                     Platform.runLater(new Runnable() {
@@ -649,7 +649,7 @@ public class GUIController implements Initializable {
         if (selectSessionDrop.getValue() != null) {
             DateFormat dtfIn = new SimpleDateFormat("dd/MM | HH:mm");
             DateFormat dtfOut = new SimpleDateFormat("MMddHHmm");
-            task = new Task<Void>() {
+            Task task = new Task<Void>() {
                 @Override
                 public Void call() {
                     String session = selectSessionDrop.getValue();
@@ -731,7 +731,7 @@ public class GUIController implements Initializable {
     public void handleSelectStatsDropClick() {
         final List<String> files = new LinkedList(fileReader.getFileRawList(folderData));
         if (files.size() - 1 != selectStatsDrop.getItems().size()) {            // to exclude folder "raw"
-            task = new Task<Void>() {
+            Task task = new Task<Void>() {
                 @Override
                 public Void call() {
                     Platform.runLater(new Runnable() {
@@ -758,7 +758,7 @@ public class GUIController implements Initializable {
 
     public void handleSelectStatsDrop() {
         if (selectStatsDrop.getValue() != null) {
-            task = new Task<Void>() {
+            Task task = new Task<Void>() {
                 @Override
                 public Void call() {
                     String address = "data/";
