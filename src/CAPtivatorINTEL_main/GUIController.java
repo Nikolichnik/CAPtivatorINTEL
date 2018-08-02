@@ -107,7 +107,6 @@ public class GUIController implements Initializable {
     private int voltage = 0, current = 0, seconds = 0, cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3;
 
 //    private Task task;      // This could be trouble with graph overlaps!
-
     private double xOffset, yOffset, nominalVoltage = 2.7;
 
     private boolean confirm = true;
@@ -285,12 +284,6 @@ public class GUIController implements Initializable {
 
     public void handleConnectClick() {
         String fileNameAll = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
-        try {
-            fileWriterAll = new FileWriter(fileNameAll, true);
-        } catch (Exception ex) {
-            System.out.println("Unable to create file!");
-        }
-
         List<String> listOfFiles = fileReader.getFileRawList(folderData);
         boolean virgin = false;
 
@@ -327,39 +320,46 @@ public class GUIController implements Initializable {
                     fileWriter = null;
                     confirm = true;
                 }
-            } else if (virgin) {                                                // If new capacitor iD
-                LocalDateTime timestamp = LocalDateTime.now();
-                DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
-
-                TextInputDialog dialog = new TextInputDialog("capacity,voltage");
-                dialog.setTitle("Initial setup");
-                dialog.setHeaderText("New capacitor ID detected!");
-                dialog.setContentText("Please set up new capacitor:");
-//                dialog
-                Optional<String> result = dialog.showAndWait();
-
-                int nominalCapacity = 0;
-
-                if (result.isPresent()) {
-                    nominalCapacity = Integer.parseInt(result.get().substring(0, result.get().indexOf(",")));
-                    nominalVoltage = Double.parseDouble(result.get().substring(result.get().indexOf(",") + 1));
-                }
-                try {
-                    fileWriterAll.append("#," + nominalVoltage + "," + nominalCapacity + "\r\n");    //dtf.format(timestamp) change to nominalVoltage
-                    fileWriterAll.flush();
-                } catch (IOException ex) {
-                    System.out.println("Initial value NOT set!");
-                }
             } else {
-                try (Scanner scanner = new Scanner(new File(fileNameAll));) {
-                    while (scanner.hasNextLine()) {
-                        String line = scanner.nextLine();
-                        if (line.contains("#")) {
-                            nominalVoltage = Double.parseDouble(line.substring(line.indexOf(",") + 1, line.lastIndexOf(",")));
-                        }
+                try {
+                    fileWriterAll = new FileWriter(fileNameAll, true);
+                } catch (Exception ex) {
+                    System.out.println("Unable to create file!");
+                }
+                if (virgin) {                                                // If new capacitor iD
+                    LocalDateTime timestamp = LocalDateTime.now();
+                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+
+                    TextInputDialog dialog = new TextInputDialog("capacity,voltage");
+                    dialog.setTitle("Initial setup");
+                    dialog.setHeaderText("New capacitor ID detected!");
+                    dialog.setContentText("Please set up new capacitor:");
+//                dialog
+                    Optional<String> result = dialog.showAndWait();
+
+                    int nominalCapacity = 0;
+
+                    if (result.isPresent()) {
+                        nominalCapacity = Integer.parseInt(result.get().substring(0, result.get().indexOf(",")));
+                        nominalVoltage = Double.parseDouble(result.get().substring(result.get().indexOf(",") + 1));
                     }
-                } catch (FileNotFoundException ex) {
-                    System.out.println("Setup file not found!");
+                    try {
+                        fileWriterAll.append("#," + nominalVoltage + "," + nominalCapacity + "\r\n");
+                        fileWriterAll.flush();
+                    } catch (IOException ex) {
+                        System.out.println("Initial value NOT set!");
+                    }
+                } else {
+                    try (Scanner scanner = new Scanner(new File(fileNameAll));) {
+                        while (scanner.hasNextLine()) {
+                            String line = scanner.nextLine();
+                            if (line.contains("#")) {
+                                nominalVoltage = Double.parseDouble(line.substring(line.indexOf(",") + 1, line.lastIndexOf(",")));
+                            }
+                        }
+                    } catch (FileNotFoundException ex) {
+                        System.out.println("Setup file not found!");
+                    }
                 }
             }
 
@@ -472,7 +472,7 @@ public class GUIController implements Initializable {
                                             @Override
                                             public void run() {
                                                 voltageData.getData().add(new XYChart.Data(seconds, voltage));
-                                                currentData.getData().add(new XYChart.Data(seconds, current));                                            
+                                                currentData.getData().add(new XYChart.Data(seconds, current));
                                             }
                                         });
                                     } else {
@@ -875,7 +875,7 @@ public class GUIController implements Initializable {
 
         voltageData.setName("Voltage");
         currentData.setName("Current");
-        
+
         graphSerial.getChart().getXAxis().setLabel("t [s]");
         graphSerial.getChart().getYAxis().setLabel("I/U [mA/mV]");
         graphSerial.getChart().getData().addAll(voltageData, currentData);
