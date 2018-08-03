@@ -287,7 +287,7 @@ public final class DataCard extends VBox {
 
         Label title = new Label(cID);
         if (file) {
-            title.setText(cID + " | " + cTimestamp.substring(0, 2) + "/" + cTimestamp.substring(2, 4));
+            title.setText(cID + " | " + cTimestamp.substring(2, 4) + "/" + cTimestamp.substring(0, 2));
         }
         title.setMinSize(vBoxWidth, titleHeight);
         title.setMaxSize(vBoxWidth, titleHeight);
