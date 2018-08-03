@@ -390,11 +390,7 @@ public class GUIController implements Initializable {
                     confirm = true;
                 }
             } else {
-                try {
-                    fileWriterAll = new FileWriter(fileNameAll, true);
-                } catch (Exception ex) {
-                    System.out.println("Unable to create file!");
-                }
+
                 if (virgin) {                                                // If new capacitor iD
                     LocalDateTime timestamp = LocalDateTime.now();
                     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
@@ -410,10 +406,17 @@ public class GUIController implements Initializable {
                     if (result.isPresent()) {
                         nominalCapacity = Integer.parseInt(result.get().substring(0, result.get().indexOf(",")));
                         nominalVoltage = Double.parseDouble(result.get().substring(result.get().indexOf(",") + 1));
+                        try {
+                            fileWriterAll = new FileWriter(fileNameAll, true);
+                        } catch (Exception ex) {
+                            System.out.println("Unable to create file!");
+                        }
                     }
                     try {
-                        fileWriterAll.append("#," + nominalVoltage + "," + nominalCapacity + "\r\n");
-                        fileWriterAll.flush();
+                        if (fileWriterAll != null) {
+                            fileWriterAll.append("#," + nominalVoltage + "," + nominalCapacity + "\r\n");
+                            fileWriterAll.flush();
+                        }
                     } catch (IOException ex) {
                         System.out.println("Initial value NOT set!");
                     }
