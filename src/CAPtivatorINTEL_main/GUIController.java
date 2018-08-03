@@ -353,11 +353,12 @@ public class GUIController implements Initializable {
     public void handleConnectClick() {
         String fileNameAll = "data/" + capacitorIDTextBox.getText() + "_all" + ".txt";
         List<String> listOfFiles = fileReader.getFileRawList(folderData);
-        boolean virgin = false;
+        boolean virgin = true;
 
         for (String file : listOfFiles) {
-            if (!file.contains(capacitorIDTextBox.getText())) {
-                virgin = true;
+            if (file.contains(capacitorIDTextBox.getText())) {
+                virgin = false;
+                break;
             }
         }
 
