@@ -7,6 +7,7 @@ import com.fazecast.jSerialComm.SerialPort;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import comms.CommHandler;
+import java.awt.Desktop;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,6 +17,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -66,6 +69,7 @@ import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -75,6 +79,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import javax.imageio.ImageIO;
@@ -103,8 +108,8 @@ public class GUIController implements Initializable {
     private OutputStream outputStream;
     private PrintStream serialWriter;
 
-    private int cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3;
-    
+    private int cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3, voltageSerial = 0, currentSerial = 0, secondsSerial = 0;
+
     private long startCycle = 0, endTime = 0;
 
     private double xOffset, yOffset, nominalVoltage = 2.7;
@@ -127,7 +132,7 @@ public class GUIController implements Initializable {
     ObservableList<String> selectPortDropItems, selectCapacitorDropItems, selectSessionDropItems, selectStatsDropItems;
 
     @FXML
-    private JFXButton minimiseButton, maximiseButton, closeButton,
+    private JFXButton helpButton, minimiseButton, maximiseButton, closeButton,
             startMeasurementButton, pauseMeasurementButton, decreaseCyclesButton, increaseCyclesButton, connectButton,
             serialReadButton, fileReadButton, statsReadButton,
             removeAllFilesButton,
@@ -145,10 +150,16 @@ public class GUIController implements Initializable {
     private Label dischargingLabel, chargingLabel, timer, cycleDisplay, totalCyclesLabel;
 
     @FXML
-    private VBox readStatsVBox, readFileVBox, readFromSerialVBox;
+    private VBox readStatsVBox, readFileVBox, readFromSerialVBox, helpVideo;
 
     @FXML
     private HBox fileCardsStack, dataCardsStack;
+
+    @FXML
+    private ImageView FFHlogo;
+
+    @FXML
+    private WebView helpVideoContent;
 
     public void setStage(Stage stage) {
         this.stage = stage;
@@ -156,6 +167,31 @@ public class GUIController implements Initializable {
 
     public void setScene(Scene scene) {
         this.scene = scene;
+    }
+
+    public void handleFFHlogoClick() {
+        try {
+            Desktop.getDesktop().browse(new URI("http://www.ffh.bg.ac.rs/"));
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } catch (URISyntaxException e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    public void handleCAPtivatorGYMClick() {
+        try {
+            Desktop.getDesktop().browse(new URI("https://github.com/Nikolichnik/CAPtivatorINTEL"));
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        } catch (URISyntaxException e1) {
+            e1.printStackTrace();
+        }
+    }
+
+    public void handleHelpButton() {
+        helpVideoContent.getEngine().load("https://www.youtube.com/embed/BQ4yd2W50No");
+        helpVideo.toFront();
     }
 
     public void handleMinimiseButton() {
@@ -374,9 +410,6 @@ public class GUIController implements Initializable {
                                 selectPortDrop.setDisable(true);
                             }
                         });
-                        int voltage = 0;
-                        int current = 0;
-                        int seconds = 0;
 
                         comms.setChosenPort(SerialPort.getCommPort(selectPortDrop.getValue()));
                         chosenPort = comms.getChosenPort();
@@ -391,8 +424,7 @@ public class GUIController implements Initializable {
 
                         try (Scanner scanner = new Scanner(chosenPort.getInputStream())) {
                             startMeasurementButton.setDisable(false);
-                            pauseMeasurementButton.setDisable(false);                            
-                            List<Integer> linijaPodataka;
+                            pauseMeasurementButton.setDisable(false);
                             while (scanner.hasNextLine() && confirm && !isCancelled()) {
                                 try {
                                     String line = scanner.nextLine();
@@ -469,20 +501,29 @@ public class GUIController implements Initializable {
                                                 }
                                             });
                                         }
-                                        linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
-                                        voltage = linijaPodataka.get(0);
-                                        current = linijaPodataka.get(1);
-                                        seconds = linijaPodataka.get(2);
-                                        linijaPodataka.clear();
+                                        Platform.runLater(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                List<Integer> linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
+                                                voltageSerial = linijaPodataka.get(0);
+                                                currentSerial = linijaPodataka.get(1);
+                                                secondsSerial = linijaPodataka.get(2);
 
-                                        voltageData.getData().add(new XYChart.Data(seconds, voltage));
-                                        currentData.getData().add(new XYChart.Data(seconds, current));
+                                                voltageData.getData().add(new XYChart.Data(secondsSerial, voltageSerial));
+                                                currentData.getData().add(new XYChart.Data(secondsSerial, currentSerial));
+                                            }
+                                        });
                                     } else {
-                                        voltageData.getData().clear();
-                                        currentData.getData().clear();
+                                        Platform.runLater(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                voltageData.getData().clear();
+                                                currentData.getData().clear();
+                                            }
+                                        });
                                     }
                                     if (fileWriter != null) {
-                                        fileWriter.append(voltage + "," + current + "," + seconds + "\r\n");
+                                        fileWriter.append(voltageSerial + "," + currentSerial + "," + secondsSerial + "\r\n");
                                         fileWriter.flush();
                                     }
                                 } catch (Exception ex) {
