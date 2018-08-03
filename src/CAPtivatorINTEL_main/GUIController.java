@@ -105,8 +105,9 @@ public class GUIController implements Initializable {
     private PrintStream serialWriter;
 
     private int cycle = 0, cycleAll = 0, measuredCapacity = -1, timestamp = 0, totalCycles = 3;
+    
+    private long startCycle = 0, endTime = 0;
 
-//    private Task task;      // This could be trouble with graph overlaps!
     private double xOffset, yOffset, nominalVoltage = 2.7;
 
     private boolean confirm = true;
@@ -391,9 +392,7 @@ public class GUIController implements Initializable {
 
                         try (Scanner scanner = new Scanner(chosenPort.getInputStream())) {
                             startMeasurementButton.setDisable(false);
-                            pauseMeasurementButton.setDisable(false);
-                            long startCycle = 0;
-                            long endTime = 0;
+                            pauseMeasurementButton.setDisable(false);                            
                             List<Integer> linijaPodataka;
                             while (scanner.hasNextLine() && confirm && !isCancelled()) {
                                 try {
@@ -463,8 +462,13 @@ public class GUIController implements Initializable {
                                         dischargingLabel.setStyle("-fx-background-color: transparent; -fx-text-fill: #323232;");
                                     } else if (line.matches("\\d+,.*")) {
                                         if (cycle > 0) {
-                                            DecimalFormat numFormat = new DecimalFormat("#.0");
-                                            timer.setText(numFormat.format((System.currentTimeMillis() - endTime) / 1000 / 360));  // update timer label with hours to end
+                                            Platform.runLater(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    DecimalFormat numFormat = new DecimalFormat("#.0");
+                                                    timer.setText(numFormat.format((System.currentTimeMillis() - endTime) / 1000 / 360));  // update timer label with hours to end
+                                                }
+                                            });
                                         }
                                         linijaPodataka = Collections.list(new StringTokenizer(line, ",", false)).stream().map(token -> Integer.parseInt((String) token)).collect(Collectors.toList());
                                         voltage = linijaPodataka.get(0);
