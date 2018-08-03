@@ -664,14 +664,16 @@ public class GUIController implements Initializable {
     }
 
     public void handleSelectCapacitorDropClick() {
-        final List<String> files = new LinkedList(fileReader.getFileRawList(folderRaw));
-        if (files.size() != selectCapacitorDrop.getItems().size()) {
+        final List<String> files = new LinkedList(fileReader.getFileRawList(folderData));
+        if ((files.size() - 1) != selectCapacitorDrop.getItems().size()) {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
                     selectCapacitorDropItems.clear();
                     for (String file : files) {
-                        selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
+                        if (!file.contains("raw")) {
+                            selectCapacitorDropItems.add(file.substring(0, file.indexOf("_")));
+                        }
                     }
                     selectCapacitorDrop.getItems().addAll(selectCapacitorDropItems);
                 }
@@ -908,13 +910,12 @@ public class GUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        
+
 //        if (!GUIController.splashShown) {                                     // Didn't like splash for now...
 //            showSplash();
 //        }
 //        splashBackground.setDisable(true);
 //        splashBackground.setVisible(false);
-
         startMeasurementButton.setDisable(true);
         pauseMeasurementButton.setDisable(true);
 
