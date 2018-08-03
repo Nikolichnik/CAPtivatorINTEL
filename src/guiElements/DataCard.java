@@ -296,7 +296,7 @@ public final class DataCard extends VBox {
 
         VBox nominal = createDatesCell("Nominal", cID, cNominal, String.valueOf(nominalVoltageLocal) + "V");
         VBox cellCapacitance = createDataCell("C [F]", Cmin, Cmiddle, Cmax);
-        VBox cellQ = createDataCell("Q [J]", Qmin, Qmiddle, Qmax);
+        VBox cellQ = createDataCell("Q [C]", Qmin, Qmiddle, Qmax);
         VBox cellEnergy = createDataCell("E [J]", Emin, Emiddle, Emax);
 
         Pane bumper = new Pane();

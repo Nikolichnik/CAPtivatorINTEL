@@ -5,6 +5,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import static javafx.stage.StageStyle.TRANSPARENT;
@@ -25,6 +26,7 @@ public class CAPtivatorINTEL extends Application {
             Scene scene = new Scene(root, 950, 530, Color.TRANSPARENT);
             gui.setScene(scene);
             stage.setTitle("CAPtivatorINTEL");
+            stage.getIcons().add(new Image("/CAPtivatorINTEL_main/resources/img/windowIcon.png"));
             stage.initStyle(TRANSPARENT);
             stage.setScene(scene);
             stage.show();

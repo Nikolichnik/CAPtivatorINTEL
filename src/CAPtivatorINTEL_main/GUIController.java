@@ -34,6 +34,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
@@ -64,6 +66,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.event.EventHandler;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
@@ -116,10 +119,12 @@ public class GUIController implements Initializable {
 
     private boolean confirm = true;
 
-    DropShadow dropShadow = new DropShadow();
+    private static boolean splashShown = false;
 
-    Stage stage;
-    Scene scene;
+    private DropShadow dropShadow = new DropShadow();
+
+    private Stage stage;
+    private Scene scene;
 
     @FXML
     private StackPane graphStackSerial, graphStackFile, graphStackStats, monitorStack;
@@ -167,6 +172,33 @@ public class GUIController implements Initializable {
 
     public void setScene(Scene scene) {
         this.scene = scene;
+    }
+
+    public void showSplash() {
+//        try {
+//            GUIController.splashShown = true;
+//
+//            VBox splashRoot = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLSplash.fxml"));
+//            root.getChildren().add(splashRoot);
+//
+//            FadeTransition fadeOut = new FadeTransition(Duration.seconds(5.0), splashRoot);
+//            fadeOut.setFromValue(1);
+//            fadeOut.setToValue(0);
+//            fadeOut.setCycleCount(1);
+//            fadeOut.play();
+//
+//            fadeOut.setOnFinished(e -> {
+//                try {
+//                    StackPane rootRestored = FXMLLoader.load(getClass().getResource("/CAPtivatorINTEL_main/FXMLDocument.fxml"));
+//                    root.getChildren().setAll(rootRestored);
+//                } catch (IOException ex) {
+//                    System.out.println("Restoring root failed!");
+//                }
+//            });
+//
+//        } catch (IOException ex) {
+//            System.out.println("Splash loader failed!");
+//        }
     }
 
     public void handleFFHlogoClick() {
@@ -876,6 +908,13 @@ public class GUIController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        
+//        if (!GUIController.splashShown) {                                     // Didn't like splash for now...
+//            showSplash();
+//        }
+//        splashBackground.setDisable(true);
+//        splashBackground.setVisible(false);
+
         startMeasurementButton.setDisable(true);
         pauseMeasurementButton.setDisable(true);
 
