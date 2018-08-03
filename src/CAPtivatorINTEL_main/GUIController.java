@@ -356,7 +356,7 @@ public class GUIController implements Initializable {
         boolean virgin = false;
 
         for (String file : listOfFiles) {
-            if (file.contains(capacitorIDTextBox.getText())) {
+            if (!file.contains(capacitorIDTextBox.getText())) {
                 virgin = true;
             }
         }
@@ -402,7 +402,6 @@ public class GUIController implements Initializable {
                     dialog.setTitle("Initial setup");
                     dialog.setHeaderText("New capacitor ID detected!");
                     dialog.setContentText("Please set up new capacitor:");
-//                dialog
                     Optional<String> result = dialog.showAndWait();
 
                     int nominalCapacity = 0;
