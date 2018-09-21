@@ -8,4 +8,6 @@ Video demoing functionalities and features available <a href="https://youtu.be/k
 
 <hr>
 
-![alt text](https://raw.githubusercontent.com/Nikolichnik/CAPtivatorINTEL/master/resources/screenshot2.png)
+<p align="center">
+  <a href="https://youtu.be/kiOnimVFppA"><img src="https://raw.githubusercontent.com/Nikolichnik/CAPtivatorINTEL/master/resources/screenshot2.png"></a>
+</p>
